@@ -60,39 +60,67 @@ function renderTeams(teams) {
       <span class="team__name">${escapeHtml(team.name)}</span>
       <span class="team__arrow">→</span>
     `;
-    el.addEventListener('click', () => openTeamModal(team));
+    el.addEventListener('click', () => openTeamModal(team, el));
     teamsEl.appendChild(el);
   });
 }
 
-// ========== Модалка команды ==========
-function openTeamModal(team) {
+// ========== Открытие модалки: сначала грузим всех игроков, потом показываем ==========
+async function openTeamModal(team, teamEl) {
+  // Лёгкая блокировка клика на время загрузки
+  if (teamEl.dataset.busy === '1') return;
+  teamEl.dataset.busy = '1';
+  teamEl.style.opacity = '0.6';
+
+  // Прогреваем кэш параллельно по всем 5 игрокам
+  const results = await Promise.all(team.players.map(p => fetchPlayerWithRetry(p.faceit)));
+
+  teamEl.dataset.busy = '0';
+  teamEl.style.opacity = '';
+
   modalTitle.textContent = team.name;
   modal.classList.remove('hidden');
   document.body.classList.add('modal-open');
 
-  modalBody.innerHTML = team.players.map(p => `
-    <div class="acc" data-nick="${escapeAttr(p.faceit)}">
-      <div class="acc__head">
-        <div class="acc__left">
-          <img class="acc__avatar" alt="" />
-          <div class="acc__info">
-            <div class="acc__nick">${escapeHtml(p.faceit)}</div>
-            <div class="acc__lenza">${escapeHtml(p.lenza)}</div>
+  modalBody.innerHTML = team.players.map((p, i) => {
+    const data = results[i];
+    const avatar = data?.avatar ? `src="${escapeAttr(data.avatar)}"` : '';
+    const levelHtml = data ? levelIconHtml(data.level, false) : '';
+    const eloHtml = data ? `<span class="acc__elo">${data.elo ?? '—'}</span>` : `<span class="acc__loading">нет данных</span>`;
+    return `
+      <div class="acc" data-nick="${escapeAttr(p.faceit)}" ${data ? 'data-loaded="1"' : ''}>
+        <div class="acc__head">
+          <div class="acc__left">
+            <img class="acc__avatar" alt="" ${avatar} />
+            <div class="acc__info">
+              <div class="acc__nick">${escapeHtml(p.faceit)}</div>
+              <div class="acc__lenza">${escapeHtml(p.lenza)}</div>
+            </div>
+          </div>
+          <div class="acc__right">
+            ${levelHtml}
+            ${eloHtml}
+            <span class="acc__chev">▶</span>
           </div>
         </div>
-        <div class="acc__right">
-          <span class="acc__loading">нажмите, чтобы загрузить</span>
-          <span class="acc__chev">▶</span>
-        </div>
+        <div class="acc__body"></div>
       </div>
-      <div class="acc__body"></div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
+  // Сохраняем данные в элементы и навешиваем обработчики
   modalBody.querySelectorAll('.acc').forEach((accEl, i) => {
-    const player = team.players[i];
-    accEl.querySelector('.acc__head').addEventListener('click', () => toggleAccordion(accEl, player));
+    const data = results[i];
+    if (data) {
+      accEl._data = data;
+      accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
+      attachLevelFallbacks(accEl);
+    } else {
+      // даже если не загрузилось — при клике попробуем ещё раз
+      accEl.querySelector('.acc__body').innerHTML =
+        '<div style="color:var(--red);padding:10px">Не удалось загрузить данные. Кликните по игроку, чтобы попробовать снова.</div>';
+    }
+    accEl.querySelector('.acc__head').addEventListener('click', () => toggleAccordion(accEl, team.players[i]));
   });
 }
 
@@ -106,7 +134,7 @@ document.addEventListener('keydown', (e) => {
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-overlay').addEventListener('click', closeModal);
 
-// ========== Аккордеон игрока с дозагрузкой ==========
+// ========== Аккордеон: раскрытие уже загруженной карточки ==========
 async function toggleAccordion(accEl, player) {
   const isOpen = accEl.classList.contains('open');
   if (isOpen) { accEl.classList.remove('open'); return; }
@@ -114,22 +142,21 @@ async function toggleAccordion(accEl, player) {
   modalBody.querySelectorAll('.acc.open').forEach(a => a.classList.remove('open'));
   accEl.classList.add('open');
 
-  if (accEl.dataset.loaded === '1') return;
+  // Если данные уже есть — раскрываем сразу
+  if (accEl._data) return;
 
+  // Иначе пробуем дозагрузить
   accEl.classList.add('loading');
-  accEl.querySelector('.acc__right').innerHTML = `<span class="acc__loading">загрузка…</span>`;
-
   const data = await fetchPlayerWithRetry(player.faceit);
+  accEl.classList.remove('loading');
 
   if (!data) {
-    accEl.classList.remove('loading');
-    accEl.classList.add('error');
-    accEl.querySelector('.acc__right').innerHTML = `<span style="color:var(--red)">ошибка загрузки, кликните ещё раз</span>`;
-    accEl.classList.remove('open');
+    accEl.querySelector('.acc__body').innerHTML =
+      '<div style="color:var(--red);padding:10px">Не удалось загрузить данные. Закройте и откройте команду заново.</div>';
     return;
   }
 
-  accEl.classList.remove('loading');
+  accEl._data = data;
   if (data.avatar) accEl.querySelector('.acc__avatar').src = data.avatar;
   accEl.querySelector('.acc__right').innerHTML = `
     ${levelIconHtml(data.level, false)}
@@ -139,10 +166,9 @@ async function toggleAccordion(accEl, player) {
   attachLevelFallbacks(accEl);
   accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
   attachLevelFallbacks(accEl.querySelector('.acc__body'));
-  accEl.dataset.loaded = '1';
 }
 
-// Загрузка с 3 попытками: 0с → 1.5с → 4с
+// ========== Загрузка игрока с 3 попытками: 0с → 1.5с → 4с ==========
 async function fetchPlayerWithRetry(nickname) {
   const cacheKey = 'faceit:' + nickname.toLowerCase();
   const cached = lsGet(cacheKey);
@@ -155,7 +181,6 @@ async function fetchPlayerWithRetry(nickname) {
       const res = await fetch(API.faceit(nickname));
       const data = await res.json();
       if (!res.ok) {
-        // не ретраим явные 4xx, кроме 429
         if (res.status !== 429 && res.status < 500) return null;
         continue;
       }
@@ -408,7 +433,6 @@ function levelIconHtml(level, big = false) {
   </span>`;
 }
 
-// Подменяет битые картинки уровней на текстовый бейдж ВНУТРИ контейнера
 function attachLevelFallbacks(root = document) {
   root.querySelectorAll('img.lvl-icon:not([data-bound])').forEach(img => {
     img.dataset.bound = '1';
