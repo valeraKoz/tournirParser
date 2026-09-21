@@ -10,14 +10,11 @@ const $ = (sel) => document.querySelector(sel);
 const teamsEl = $('#teams');
 const statusEl = $('#status');
 const searchEl = $('#search');
-const tooltip = $('#tooltip');
 const modal = $('#modal');
 const modalBody = $('#modal-body');
 const modalTitle = $('#modal-title');
-const modalAvg = $('#modal-avg');
 
 let teamsData = [];
-let currentModalTeam = null;
 
 // ========== Кэш ==========
 function lsGet(key) {
@@ -44,14 +41,13 @@ async function loadTeams() {
     teamsData = data.teams || [];
     renderTeams(teamsData);
     statusEl.textContent = `Команд: ${teamsData.length} · игроков: ${teamsData.reduce((a,t)=>a+t.players.length,0)}`;
-    preloadAllPlayers();
   } catch (e) {
     statusEl.textContent = 'Ошибка загрузки команд: ' + e.message;
     statusEl.classList.add('error');
   }
 }
 
-// ========== Рендер компактной сетки команд ==========
+// ========== Сетка команд ==========
 function renderTeams(teams) {
   teamsEl.innerHTML = '';
   teams.forEach((team) => {
@@ -59,82 +55,71 @@ function renderTeams(teams) {
     el.className = 'team';
     el.dataset.team = team.name;
     el.innerHTML = `
-      <div class="team__title">
-        <span class="team__name">${escapeHtml(team.name)}</span>
-        <span class="team__avg hidden"></span>
-      </div>
+      <span class="team__name">${escapeHtml(team.name)}</span>
       <span class="team__arrow">→</span>
     `;
-    el.addEventListener('click', () => openTeamModal(team, el));
+    el.addEventListener('click', () => openTeamModal(team));
     teamsEl.appendChild(el);
   });
 }
 
-// ========== Открытие модалки команды ==========
-async function openTeamModal(team, teamEl) {
-  currentModalTeam = team;
+// ========== Модалка команды ==========
+function openTeamModal(team) {
   modalTitle.textContent = team.name;
-  modalAvg.classList.add('hidden');
-  modalAvg.textContent = '';
   modal.classList.remove('hidden');
   document.body.classList.add('modal-open');
 
   modalBody.innerHTML = team.players.map(p => `
-    <div class="modal-player loading" data-nick="${escapeAttr(p.faceit)}" data-lenza="${escapeAttr(p.lenza)}">
-      <div class="modal-player__left">
-        <img class="modal-player__avatar" alt="" />
-        <div class="modal-player__info">
-          <div class="modal-player__nick">${escapeHtml(p.faceit)}</div>
-          <div class="modal-player__lenza">${escapeHtml(p.lenza)}</div>
+    <div class="acc" data-nick="${escapeAttr(p.faceit)}">
+      <div class="acc__head">
+        <div class="acc__left">
+          <img class="acc__avatar" alt="" />
+          <div class="acc__info">
+            <div class="acc__nick">${escapeHtml(p.faceit)}</div>
+            <div class="acc__lenza">${escapeHtml(p.lenza)}</div>
+          </div>
+        </div>
+        <div class="acc__right">
+          <span class="acc__loading">нажмите, чтобы загрузить</span>
+          <span class="acc__chev">▶</span>
         </div>
       </div>
-      <div class="modal-player__stats"><span>загрузка…</span></div>
+      <div class="acc__body"></div>
     </div>
   `).join('');
 
-  modalBody.querySelectorAll('.modal-player').forEach(playerEl => {
-    playerEl.addEventListener('mouseenter', (e) => showTooltip(playerEl, e));
-    playerEl.addEventListener('mousemove', moveTooltip);
-    playerEl.addEventListener('mouseleave', hideTooltip);
-    playerEl.addEventListener('click', () => {
-      const url = playerEl.dataset.url
-        || `https://www.faceit.com/ru/players/${encodeURIComponent(playerEl.dataset.nick)}`;
-      window.open(url, '_blank', 'noopener');
-    });
+  modalBody.querySelectorAll('.acc').forEach((accEl, i) => {
+    const player = team.players[i];
+    accEl.querySelector('.acc__head').addEventListener('click', () => toggleAccordion(accEl, player));
   });
-
-  await Promise.all(team.players.map((p) => loadModalPlayer(p)));
-
-  // Обновляем средний ELO в модалке и в карточке сетки
-  const elos = Array.from(modalBody.querySelectorAll('.modal-player'))
-    .map(p => p._data?.elo)
-    .filter(v => typeof v === 'number' && !isNaN(v));
-  if (elos.length) {
-    const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
-    modalAvg.textContent = '~ ' + avg + ' ELO';
-    modalAvg.classList.remove('hidden');
-    const badge = teamEl.querySelector('.team__avg');
-    if (badge) { badge.textContent = '~ ' + avg + ' ELO'; badge.classList.remove('hidden'); }
-  }
 }
 
 function closeModal() {
   modal.classList.add('hidden');
   document.body.classList.remove('modal-open');
-  hideTooltip();
-  currentModalTeam = null;
 }
-
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
 });
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-overlay').addEventListener('click', closeModal);
 
-// ========== Загрузка одного игрока в модалку ==========
-async function loadModalPlayer(player) {
-  const el = modalBody.querySelector(`.modal-player[data-nick="${cssEscape(player.faceit)}"]`);
-  if (!el) return;
+// ========== Аккордеон игрока ==========
+async function toggleAccordion(accEl, player) {
+  const isOpen = accEl.classList.contains('open');
+  if (isOpen) {
+    accEl.classList.remove('open');
+    return;
+  }
+  // Закрываем остальные открытые
+  modalBody.querySelectorAll('.acc.open').forEach(a => a.classList.remove('open'));
+  accEl.classList.add('open');
+
+  // Если уже загружено — просто показать
+  if (accEl.dataset.loaded === '1') return;
+
+  // Загружаем данные
+  accEl.classList.add('loading');
   const cacheKey = 'faceit:' + player.faceit.toLowerCase();
   let data = lsGet(cacheKey);
   try {
@@ -144,136 +129,158 @@ async function loadModalPlayer(player) {
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
       lsSet(cacheKey, data);
     }
-    el.classList.remove('loading');
-    el.dataset.url = normalizeFaceitUrl(data.faceit_url, player.faceit);
-    if (data.avatar) el.querySelector('.modal-player__avatar').src = data.avatar;
-    el.querySelector('.modal-player__stats').innerHTML = `
-      ${levelIconHtml(data.level, true)}
-      <span class="elo">${data.elo ?? '—'}</span>
+    accEl.classList.remove('loading');
+    if (data.avatar) accEl.querySelector('.acc__avatar').src = data.avatar;
+    accEl.querySelector('.acc__right').innerHTML = `
+      ${levelIconHtml(data.level, false)}
+      <span class="acc__elo">${data.elo ?? '—'}</span>
+      <span class="acc__chev">▶</span>
     `;
-    attachLevelFallbacks(el);
-    el._data = data;
+    attachLevelFallbacks(accEl);
+    accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
+    attachLevelFallbacks(accEl.querySelector('.acc__body'));
+    accEl.dataset.loaded = '1';
   } catch (e) {
-    el.classList.remove('loading');
-    el.classList.add('error');
-    el.querySelector('.modal-player__stats').innerHTML = `<span title="${escapeAttr(e.message)}">ошибка</span>`;
+    accEl.classList.remove('loading');
+    accEl.classList.add('error');
+    accEl.querySelector('.acc__right').innerHTML = `<span>ошибка загрузки</span>`;
+    accEl.querySelector('.acc__body').innerHTML = `<div style="color:var(--red);padding:10px">${escapeHtml(e.message)}</div>`;
+    accEl.classList.add('open');
   }
 }
 
-// ========== Проактивная загрузка всех игроков (для среднего ELO) ==========
-async function preloadAllPlayers() {
-  const allPlayers = [];
-  teamsData.forEach(team => team.players.forEach(p => allPlayers.push(p.faceit)));
-  const unique = [...new Set(allPlayers.map(n => n.toLowerCase()))];
-
-  const CONCURRENCY = 4;
-  let idx = 0;
-  const results = {};
-
-  async function worker() {
-    while (idx < unique.length) {
-      const myIdx = idx++;
-      const nick = unique[myIdx];
-      const cacheKey = 'faceit:' + nick;
-      let data = lsGet(cacheKey);
-      try {
-        if (!data) {
-          const res = await fetch(API.faceit(nick));
-          data = await res.json();
-          if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-          lsSet(cacheKey, data);
-        }
-        if (typeof data.elo === 'number') results[nick] = data.elo;
-      } catch (e) {}
-      if (Object.keys(results).length % 5 === 0) updateAllTeamsAvg(results);
-    }
-  }
-  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-  updateAllTeamsAvg(results);
-}
-
-function updateAllTeamsAvg(eloMap) {
-  document.querySelectorAll('.team').forEach(teamEl => {
-    const teamName = teamEl.dataset.team;
-    const team = teamsData.find(t => t.name === teamName);
-    if (!team) return;
-    const elos = team.players.map(p => eloMap[p.faceit.toLowerCase()]).filter(v => typeof v === 'number');
-    if (!elos.length) return;
-    const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
-    const badge = teamEl.querySelector('.team__avg');
-    if (badge) { badge.textContent = '~ ' + avg + ' ELO'; badge.classList.remove('hidden'); }
-  });
-}
-
-// ========== Тултип ==========
-let tooltipTimer = null;
-function showTooltip(playerEl, evt) {
-  const data = playerEl._data;
-  if (!data) return;
-  clearTimeout(tooltipTimer);
-  tooltipTimer = setTimeout(() => {
-    fillTooltip(data);
-    tooltip.classList.remove('hidden');
-    requestAnimationFrame(() => tooltip.classList.add('visible'));
-    moveTooltip(evt);
-  }, 150);
-}
-function hideTooltip() {
-  clearTimeout(tooltipTimer);
-  tooltip.classList.remove('visible');
-  setTimeout(() => tooltip.classList.add('hidden'), 120);
-}
-function moveTooltip(evt) {
-  const pad = 16;
-  const w = tooltip.offsetWidth || 560;
-  const h = tooltip.offsetHeight || 420;
-  let x = evt.clientX + pad;
-  let y = evt.clientY + pad;
-  if (x + w > window.innerWidth) x = evt.clientX - w - pad;
-  if (y + h > window.innerHeight) y = evt.clientY - h - pad;
-  tooltip.style.left = Math.max(8, x) + 'px';
-  tooltip.style.top  = Math.max(8, y) + 'px';
-}
-
-function fillTooltip(d) {
-  $('#tt-nick').textContent = d.nickname || '—';
-  $('#tt-avatar').src = d.avatar || '';
-  $('#tt-level').innerHTML = levelIconHtml(d.level, true);
-  attachLevelFallbacks($('#tt-level'));
-  $('#tt-elo').textContent = (d.elo ? d.elo + ' ELO' : '— ELO');
-
+// ========== Карточка игрока (1-в-1 как на Faceit) ==========
+function renderPlayerCard(d) {
   const s = d.stats || {};
-  $('#tt-matches').textContent = s.matches ?? '—';
-  $('#tt-winrate').textContent = s.win_rate != null ? s.win_rate + '%' : '—';
-  $('#tt-kd').textContent = s.kd ?? '—';
-  $('#tt-kr').textContent = s.kr ?? '—';
-  $('#tt-hs').textContent = s.hs != null ? s.hs + '%' : '—';
-  $('#tt-adr').textContent = s.adr ?? '—';
-
   const recent = (d.recent || []).slice(0, 30);
-  $('#tt-recent').innerHTML = renderRecentTable(recent);
+  const recentReversed = recent.slice().reverse(); // старые → новые для полоски
 
-  const eloPoints = recent.map(m => m.elo).filter(v => v != null).reverse();
-  $('#tt-chart').innerHTML = renderEloChart(eloPoints);
+  // Полоска W/L
+  const dots = recentReversed.map(m => {
+    const cls = m.winner === '1' ? 'win' : m.winner === '0' ? 'loss' : 'unknown';
+    return `<span class="pc__dot ${cls}"></span>`;
+  }).join('');
 
+  // Счётчики W/L
+  const wins = recentReversed.filter(m => m.winner === '1').length;
+  const losses = recentReversed.filter(m => m.winner === '0').length;
+
+  // График Elo
+  const eloPoints = recentReversed.map(m => m.elo).filter(v => v != null);
+  const chartSvg = renderEloChart(eloPoints);
+  let deltaHtml = '<span class="delta">—</span>';
   if (eloPoints.length >= 2) {
     const delta = eloPoints[eloPoints.length - 1] - eloPoints[0];
-    const el = $('#tt-elo-delta');
-    el.textContent = (delta >= 0 ? '+' : '') + delta + ' ELO за ' + eloPoints.length + ' матчей';
-    el.classList.remove('plus', 'minus');
-    el.classList.add(delta >= 0 ? 'plus' : 'minus');
-  } else {
-    $('#tt-elo-delta').textContent = '—';
+    const cls = delta >= 0 ? 'plus' : 'minus';
+    deltaHtml = `<span class="delta ${cls}">${delta >= 0 ? '+' : ''}${delta} ELO</span>`;
   }
 
-  const link = $('#tt-faceit');
-  link.href = normalizeFaceitUrl(d.faceit_url, d.nickname);
+  return `
+    <div class="pc">
+      <div class="pc__season">
+        <div class="pc__season-left">
+          <span class="pc__season-name">Season 9</span>
+          <span class="pc__season-sub">Матчмейкинг</span>
+        </div>
+        <div class="pc__season-right">Статистика Season 9</div>
+      </div>
+
+      <div class="pc__elo-block">
+        <div class="pc__level-wrap">
+          ${levelIconHtml(d.level, false, 64)}
+        </div>
+        <div class="pc__elo-num">${d.elo ?? '—'}</div>
+      </div>
+
+      <div class="pc__summary">
+        <div class="pc__summary-cell">
+          <span class="pc__summary-label">Матчи</span>
+          <span class="pc__summary-value">${s.matches ?? '—'}</span>
+        </div>
+        <div class="pc__summary-cell">
+          <span class="pc__summary-label">Процент побед</span>
+          <span class="pc__summary-value">${s.win_rate != null ? s.win_rate + '%' : '—'}</span>
+        </div>
+      </div>
+
+      <div class="pc__recent-title">
+        <span>Недавние результаты</span>
+        <span class="muted">Последние матчи (30)</span>
+      </div>
+
+      <div class="pc__dots-row">
+        <span class="label">Изменение Elo</span>
+        ${deltaHtml}
+        <span class="pc__dots">${dots}</span>
+      </div>
+
+      <div class="pc__chart">
+        <div class="pc__chart-head">
+          <span class="left">Изменение Elo по матчам</span>
+          <span class="w">${wins} W</span>
+          <span class="l">${losses} L</span>
+        </div>
+        <div class="pc__chart-svg">${chartSvg}</div>
+      </div>
+
+      <div class="pc__grid">
+        <div class="pc__cell">
+          <div class="pc__cell-label">K/D/A</div>
+          <div class="pc__cell-value big">${avgKda(recent)}</div>
+        </div>
+        <div class="pc__cell">
+          <div class="pc__cell-label">K/D</div>
+          <div class="pc__cell-value big">${s.kd ?? '—'}</div>
+        </div>
+        <div class="pc__cell">
+          <div class="pc__cell-label">K/R</div>
+          <div class="pc__cell-value big">${s.kr ?? '—'}</div>
+        </div>
+        <div class="pc__cell">
+          <div class="pc__cell-label">HS%</div>
+          <div class="pc__cell-value big">${s.hs != null ? s.hs + '%' : '—'}</div>
+        </div>
+        <div class="pc__cell">
+          <div class="pc__cell-label">ADR</div>
+          <div class="pc__cell-value big">${s.adr ?? '—'}</div>
+        </div>
+        <div class="pc__cell">
+          <div class="pc__cell-label">Процент побед</div>
+          <div class="pc__cell-value big">${s.win_rate != null ? s.win_rate + '%' : '—'}</div>
+        </div>
+      </div>
+
+      <div class="pc__table-wrap">
+        <div class="pc__table-head">
+          <span>Последние матчи</span>
+          <span>${recent.length}</span>
+        </div>
+        <div class="pc__table-scroll">
+          ${renderRecentTable(recent)}
+        </div>
+      </div>
+
+      <div class="pc__footer">
+        <span class="muted">Источник: FACEIT API</span>
+        <a href="${normalizeFaceitUrl(d.faceit_url, d.nickname)}" target="_blank" rel="noopener">Открыть профиль →</a>
+      </div>
+    </div>
+  `;
+}
+
+function avgKda(recent) {
+  const arr = recent.filter(m => m.kills != null && m.deaths != null);
+  if (!arr.length) return '—';
+  const kills = arr.reduce((a, m) => a + Number(m.kills), 0);
+  const deaths = arr.reduce((a, m) => a + Number(m.deaths), 0);
+  const assists = arr.reduce((a, m) => a + Number(m.assists || 0), 0);
+  return `${Math.round(kills / arr.length)} / ${Math.round(deaths / arr.length)} / ${Math.round(assists / arr.length)}`;
 }
 
 // ========== SVG-график Elo ==========
 function renderEloChart(points) {
   if (!points.length) return '<div style="color:var(--muted);font-size:11px;padding:8px">нет данных</div>';
-  const W = 320, H = 70, pad = 6;
+  const W = 320, H = 80, pad = 6;
   const min = Math.min(...points), max = Math.max(...points);
   const range = max - min || 1;
   const stepX = (W - pad * 2) / Math.max(1, points.length - 1);
@@ -304,7 +311,7 @@ function renderEloChart(points) {
 // ========== Таблица последних матчей ==========
 function renderRecentTable(matches) {
   if (!matches.length) {
-    return '<div style="color:var(--muted);font-size:11px;padding:6px">нет данных</div>';
+    return '<div style="color:var(--muted);font-size:11px;padding:8px">нет данных</div>';
   }
   const rows = matches.map((m) => {
     const isWin = m.winner === '1';
@@ -318,8 +325,8 @@ function renderRecentTable(matches) {
       <tr>
         <td class="rt__result ${resultCls}">${resultTxt}</td>
         <td class="rt__date">${date}</td>
-        <td class="rt__map">${m.map || '—'}</td>
-        <td class="rt__score">${m.score || '—'}</td>
+        <td>${m.map || '—'}</td>
+        <td>${m.score || '—'}</td>
         <td class="rt__num">${m.kills != null && m.deaths != null ? `${m.kills}/${m.deaths}/${m.assists ?? 0}` : '—'}</td>
         <td class="rt__num">${m.kd ?? '—'}</td>
         <td class="rt__num">${m.kr ?? '—'}</td>
@@ -354,7 +361,6 @@ searchEl.addEventListener('input', () => {
 // ========== Обновить ==========
 $('#refreshAll').addEventListener('click', () => {
   Object.keys(localStorage).forEach(k => { if (k.startsWith('faceit:')) localStorage.removeItem(k); });
-  document.querySelectorAll('.team__avg').forEach(b => { b.textContent = ''; b.classList.add('hidden'); });
   loadTeams();
 });
 
@@ -374,14 +380,15 @@ function normalizeFaceitUrl(url, nickname) {
   return u;
 }
 
-function levelIconHtml(level, big = false) {
+// Иконка уровня. size — опциональный размер в px
+function levelIconHtml(level, big = false, size = null) {
   const lvl = level ?? 1;
-  const size = big ? 40 : 26;
+  const s = size ?? (big ? 40 : 26);
   return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
     src="/assets/levels/${lvl}_lvl.png"
     alt="LVL ${level ?? '—'}"
     data-fallback="${escapeAttr(level ?? '—')}"
-    style="width:${size}px;height:${size}px" />`;
+    style="width:${s}px;height:${s}px" />`;
 }
 
 function attachLevelFallbacks(root = document) {
