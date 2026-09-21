@@ -307,7 +307,7 @@ function levelIconHtml(level, big = false) {
   const size = big ? 26 : 22;
   const fallback = `<span class="lvl">${level ?? '—'}</span>`;
   return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
-    src="/assets/levels/level${lvl}.png"
+    src="/assets/levels/${lvl}_lvl.png"
     alt="LVL ${level ?? '—'}"
     style="width:${size}px;height:${size}px"
     onerror="this.onerror=null;this.outerHTML='${fallback.replace(/'/g, "\\'")}'" />`;
