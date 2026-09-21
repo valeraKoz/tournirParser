@@ -363,3 +363,9 @@ body.modal-open { overflow: hidden; }
 .pc__footer a { color: var(--orange); text-decoration: none; font-weight: 600; }
 .pc__footer a:hover { text-decoration: underline; }
 .pc__footer .muted { color: var(--muted); }
+
+
+/* Команда во время загрузки данных */
+.team[data-busy="1"] { cursor: wait; }
+.team[data-busy="1"] .team__arrow { color: var(--orange); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
