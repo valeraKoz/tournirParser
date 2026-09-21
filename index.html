@@ -24,6 +24,21 @@
     <div id="teams" class="teams"></div>
   </main>
 
+  <!-- Модальное окно команды -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal__overlay" id="modal-overlay"></div>
+    <div class="modal__window">
+      <div class="modal__header">
+        <div class="modal__title-wrap">
+          <h2 class="modal__title" id="modal-title">Team</h2>
+          <span class="modal__avg hidden" id="modal-avg"></span>
+        </div>
+        <button class="modal__close" id="modal-close" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal__body" id="modal-body"></div>
+    </div>
+  </div>
+
   <!-- Тултип с карточкой игрока -->
   <div id="tooltip" class="tooltip hidden" role="tooltip">
     <div class="tooltip__inner">
@@ -32,7 +47,7 @@
         <div class="card__identity">
           <div class="card__nick" id="tt-nick">—</div>
           <div class="card__meta">
-            <span class="lvl" id="tt-level">—</span>
+            <span id="tt-level">—</span>
             <span class="elo" id="tt-elo">—</span>
           </div>
         </div>
