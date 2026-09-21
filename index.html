@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Киберкубок — статистика команд</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__left">
+      <span class="logo">◈</span>
+      <h1>Киберкубок партнёров Яндекса</h1>
+      <span class="subtitle">CS2 · статистика игроков через FACEIT</span>
+    </div>
+    <div class="topbar__right">
+      <input type="search" id="search" placeholder="Поиск команды или игрока…" />
+      <button id="refreshAll" title="Сбросить кэш браузера и загрузить заново">Обновить</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="status" class="status">Загрузка списка команд…</div>
+    <div id="teams" class="teams"></div>
+  </main>
+
+  <!-- Тултип с карточкой игрока -->
+  <div id="tooltip" class="tooltip hidden" role="tooltip">
+    <div class="tooltip__inner">
+      <div class="card__header">
+        <img id="tt-avatar" class="card__avatar" alt="" />
+        <div class="card__identity">
+          <div class="card__nick" id="tt-nick">—</div>
+          <div class="card__meta">
+            <span class="lvl" id="tt-level">—</span>
+            <span class="elo" id="tt-elo">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card__grid">
+        <div class="cell"><div class="cell__label">Матчи</div><div class="cell__value" id="tt-matches">—</div></div>
+        <div class="cell"><div class="cell__label">Winrate</div><div class="cell__value" id="tt-winrate">—</div></div>
+        <div class="cell"><div class="cell__label">K/D</div><div class="cell__value" id="tt-kd">—</div></div>
+        <div class="cell"><div class="cell__label">K/R (AVG)</div><div class="cell__value" id="tt-kr">—</div></div>
+        <div class="cell"><div class="cell__label">HS%</div><div class="cell__value" id="tt-hs">—</div></div>
+        <div class="cell"><div class="cell__label">ADR</div><div class="cell__value" id="tt-adr">—</div></div>
+      </div>
+
+      <div class="card__section-title">Последние матчи</div>
+      <div class="recent" id="tt-recent"></div>
+
+      <div class="card__section-title">Изменение Elo</div>
+      <div class="chart" id="tt-chart"></div>
+
+      <div class="card__footer">
+        <span id="tt-elo-delta">—</span>
+        <a id="tt-faceit" href="#" target="_blank" rel="noopener">Открыть профиль →</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
