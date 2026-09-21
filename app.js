@@ -153,7 +153,7 @@ async function toggleAccordion(accEl, player) {
   }
 
   accEl._data = data;
-  if (data.avatar) accEl.querySelector('.acc__avatar').src = data.avatar;
+  accEl.querySelector('.acc__avatar').src = data.avatar || '/assets/no-ava.jpg';
   accEl.querySelector('.acc__right').innerHTML = `
     ${levelIconHtml(data.level, false)}
     <span class="acc__elo">${data.elo ?? '—'}</span>
