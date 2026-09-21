@@ -344,4 +344,57 @@ function renderRecentTable(matches) {
 
 // ========== Поиск ==========
 searchEl.addEventListener('input', () => {
-  const q = searchEl.value.trim().toLowerCase
+  const q = searchEl.value.trim().toLowerCase();
+  document.querySelectorAll('.team').forEach(el => {
+    const name = el.dataset.team.toLowerCase();
+    el.style.display = (!q || name.includes(q)) ? '' : 'none';
+  });
+});
+
+// ========== Обновить ==========
+$('#refreshAll').addEventListener('click', () => {
+  Object.keys(localStorage).forEach(k => { if (k.startsWith('faceit:')) localStorage.removeItem(k); });
+  document.querySelectorAll('.team__avg').forEach(b => { b.textContent = ''; b.classList.add('hidden'); });
+  loadTeams();
+});
+
+// ========== Утилиты ==========
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+function cssEscape(s) { return String(s).replace(/["\\]/g, '\\$&'); }
+
+function normalizeFaceitUrl(url, nickname) {
+  if (!url) return `https://www.faceit.com/ru/players/${encodeURIComponent(nickname)}`;
+  let u = String(url).replace('{lang}', 'ru');
+  if (!/^https?:\/\//i.test(u)) u = 'https://www.faceit.com' + (u.startsWith('/') ? '' : '/') + u;
+  const match = u.match(/https?:\/\/www\.faceit\.com(https?:\/\/.+)$/i);
+  if (match) u = match[1];
+  return u;
+}
+
+function levelIconHtml(level, big = false) {
+  const lvl = level ?? 1;
+  const size = big ? 40 : 26;
+  return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
+    src="/assets/levels/${lvl}_lvl.png"
+    alt="LVL ${level ?? '—'}"
+    data-fallback="${escapeAttr(level ?? '—')}"
+    style="width:${size}px;height:${size}px" />`;
+}
+
+function attachLevelFallbacks(root = document) {
+  root.querySelectorAll('img.lvl-icon:not([data-bound])').forEach(img => {
+    img.dataset.bound = '1';
+    img.addEventListener('error', () => {
+      const badge = document.createElement('span');
+      badge.className = 'lvl';
+      badge.textContent = img.dataset.fallback || '—';
+      img.replaceWith(badge);
+    });
+  });
+}
+
+// ========== Старт ==========
+loadTeams();
