@@ -72,6 +72,9 @@ body.modal-open { overflow: hidden; }
   transition: border-color .15s, background .15s, transform .1s;
 }
 .team:hover { border-color: var(--orange); background: var(--card-2); transform: translateY(-1px); }
+.team[data-busy="1"] { cursor: wait; }
+.team[data-busy="1"] .team__arrow { color: var(--orange); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 .team__name { font-weight: 600; font-size: 15px; }
 .team__arrow { color: var(--muted); transition: color .15s, transform .15s; }
 .team:hover .team__arrow { color: var(--orange); transform: translateX(2px); }
@@ -139,18 +142,38 @@ body.modal-open { overflow: hidden; }
   cursor: pointer;
   user-select: none;
 }
-.acc__left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.acc__left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; }
 .acc__avatar {
   width: 40px; height: 40px; border-radius: 50%;
   background: #2a2f3a; object-fit: cover;
   border: 1px solid var(--border);
+  flex: 0 0 40px;
 }
 .acc__info { min-width: 0; }
 .acc__nick { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
 .acc__lenza { color: var(--muted); font-size: 11px; }
-.acc__right { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.acc__elo { color: var(--orange); font-weight: 700; }
-.acc__chev { color: var(--muted); transition: transform .2s; font-size: 12px; }
+
+/* Правая часть шапки аккордеона — фиксированные колонки */
+.acc__right {
+  display: grid;
+  grid-template-columns: 28px 60px 16px;
+  align-items: center;
+  justify-items: center;
+  gap: 10px;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+.acc__elo {
+  color: var(--orange);
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+}
+.acc__chev {
+  color: var(--muted);
+  transition: transform .2s;
+  font-size: 12px;
+}
 .acc.open .acc__chev { transform: rotate(90deg); color: var(--orange); }
 .acc__loading { color: var(--muted); font-size: 12px; }
 .acc.loading .acc__right { color: var(--muted); }
@@ -265,8 +288,9 @@ body.modal-open { overflow: hidden; }
   font-size: 12px;
 }
 .pc__dots-row .label { color: var(--muted); margin-right: 4px; }
-.pc__dots-row .w { color: var(--green); font-weight: 700; }
-.pc__dots-row .l { color: var(--red); font-weight: 700; }
+.pc__dots-row .delta { font-weight: 700; }
+.pc__dots-row .delta.plus { color: var(--green); }
+.pc__dots-row .delta.minus { color: var(--red); }
 .pc__dots {
   display: flex; gap: 4px; flex-wrap: wrap;
   margin-left: auto;
@@ -289,9 +313,6 @@ body.modal-open { overflow: hidden; }
   margin-bottom: 6px;
 }
 .pc__chart-head .left { color: var(--muted); }
-.pc__chart-head .delta { font-weight: 700; }
-.pc__chart-head .delta.plus { color: var(--green); }
-.pc__chart-head .delta.minus { color: var(--red); }
 .pc__chart-head .w { color: var(--green); font-weight: 700; }
 .pc__chart-head .l { color: var(--red); font-weight: 700; }
 .pc__chart-svg { width: 100%; height: 80px; }
@@ -363,9 +384,3 @@ body.modal-open { overflow: hidden; }
 .pc__footer a { color: var(--orange); text-decoration: none; font-weight: 600; }
 .pc__footer a:hover { text-decoration: underline; }
 .pc__footer .muted { color: var(--muted); }
-
-
-/* Команда во время загрузки данных */
-.team[data-busy="1"] { cursor: wait; }
-.team[data-busy="1"] .team__arrow { color: var(--orange); animation: pulse 1s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
