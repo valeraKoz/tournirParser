@@ -21,6 +21,7 @@ html, body {
   font-size: 14px;
   min-height: 100vh;
 }
+body.modal-open { overflow: hidden; }
 
 /* ========== Верхняя панель ========== */
 .topbar {
@@ -55,7 +56,7 @@ html, body {
 /* ========== Сетка команд ========== */
 .teams {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
   padding: 0 24px 40px;
 }
@@ -63,22 +64,24 @@ html, body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
-  transition: border-color .15s;
-}
-.team:hover { border-color: #39404e; }
-.team.open { border-color: var(--orange); }
-
-.team__head {
-  display: flex; align-items: center; justify-content: space-between;
   padding: 12px 14px;
   cursor: pointer;
-  user-select: none;
+  transition: border-color .15s, transform .1s, background .15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
 }
-.team__title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.team:hover {
+  border-color: var(--orange);
+  background: var(--card-2);
+  transform: translateY(-1px);
+}
+.team__title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .team__name { font-weight: 600; font-size: 15px; }
 .team__avg {
   display: inline-block;
+  align-self: flex-start;
   padding: 2px 8px;
   border-radius: 6px;
   background: rgba(255, 90, 31, 0.15);
@@ -87,42 +90,94 @@ html, body {
   font-weight: 700;
   white-space: nowrap;
 }
-.team__avg.hidden { display: none; }
-.team__toggle { color: var(--muted); transition: transform .2s; }
-.team.open .team__toggle { transform: rotate(90deg); color: var(--orange); }
+.team__avg.hidden { visibility: hidden; }
+.team__arrow {
+  color: var(--muted);
+  font-size: 14px;
+  transition: transform .15s, color .15s;
+}
+.team:hover .team__arrow { color: var(--orange); transform: translateX(2px); }
 
-.team__body { display: none; border-top: 1px solid var(--border); }
-.team.open .team__body { display: block; }
+/* ========== Модальное окно ========== */
+.modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; }
+.modal.hidden { display: none; }
+.modal__overlay {
+  position: absolute; inset: 0;
+  background: rgba(5, 6, 9, 0.75);
+  backdrop-filter: blur(4px);
+  animation: fadeIn .15s ease;
+}
+.modal__window {
+  position: relative;
+  z-index: 1;
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 60px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp .18s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ========== Игрок ========== */
-.player {
+.modal__header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #1c2029 0%, #1a1d24 100%);
+}
+.modal__title-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.modal__title { margin: 0; font-size: 18px; font-weight: 700; }
+.modal__avg {
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(255, 90, 31, 0.15);
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 700;
+}
+.modal__avg.hidden { display: none; }
+.modal__close {
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border);
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all .15s;
+}
+.modal__close:hover { color: var(--text); border-color: var(--orange); background: rgba(255,90,31,.1); }
+
+.modal__body { padding: 8px 20px 20px; overflow-y: auto; }
+
+/* ========== Игроки внутри модалки ========== */
+.modal-player {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 4px;
   border-bottom: 1px solid #1f232b;
   cursor: pointer;
   transition: background .12s;
+  border-radius: 8px;
 }
-.player:last-child { border-bottom: none; }
-.player:hover { background: var(--card-2); }
-.player__left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.player__avatar {
-  width: 28px; height: 28px; border-radius: 50%;
+.modal-player:last-child { border-bottom: none; }
+.modal-player:hover { background: var(--card-2); }
+.modal-player__left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.modal-player__avatar {
+  width: 40px; height: 40px; border-radius: 50%;
   background: #2a2f3a; object-fit: cover;
   border: 1px solid var(--border);
 }
-.player__nick {
-  font-weight: 500; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; max-width: 140px;
-}
-.player__lenza { color: var(--muted); font-size: 11px; }
-.player__stats { display: flex; gap: 8px; align-items: center; font-size: 12px; }
-.player__stats .lvl {
-  background: #2a2f3a; color: var(--text);
-  padding: 2px 7px; border-radius: 6px; font-weight: 600; font-size: 11px;
-}
-.player__stats .elo { color: var(--orange); font-weight: 600; }
-.player.loading .player__stats { color: var(--muted); }
-.player.error .player__stats { color: var(--red); }
+.modal-player__info { min-width: 0; }
+.modal-player__nick { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.modal-player__lenza { color: var(--muted); font-size: 11px; }
+.modal-player__stats { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.modal-player__stats .elo { color: var(--orange); font-weight: 700; }
+.modal-player.loading .modal-player__stats { color: var(--muted); }
+.modal-player.error .modal-player__stats { color: var(--red); }
 
 /* Иконки уровня */
 .lvl-icon {
@@ -131,7 +186,6 @@ html, body {
   object-fit: contain;
   background: transparent;
   border: none;
-  image-rendering: -webkit-optimize-contrast;
 }
 .lvl-icon--big { width: 40px; height: 40px; }
 
@@ -208,11 +262,7 @@ html, body {
   border-radius: 8px;
   background: var(--bg-2);
 }
-.rt {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-}
+.rt { width: 100%; border-collapse: collapse; font-size: 11px; }
 .rt thead th {
   position: sticky; top: 0;
   background: var(--card-2);
@@ -225,11 +275,7 @@ html, body {
   text-transform: uppercase;
   letter-spacing: .3px;
 }
-.rt tbody td {
-  padding: 5px 6px;
-  border-bottom: 1px solid #1c1f26;
-  white-space: nowrap;
-}
+.rt tbody td { padding: 5px 6px; border-bottom: 1px solid #1c1f26; white-space: nowrap; }
 .rt tbody tr:last-child td { border-bottom: none; }
 .rt tbody tr:hover { background: rgba(255,255,255,0.03); }
 .rt__result { font-weight: 700; }
