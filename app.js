@@ -65,18 +65,14 @@ function renderTeams(teams) {
   });
 }
 
-// ========== Открытие модалки: сначала грузим всех игроков, потом показываем ==========
+// ========== Открытие модалки: грузим всех игроков, потом показываем ==========
 async function openTeamModal(team, teamEl) {
-  // Лёгкая блокировка клика на время загрузки
   if (teamEl.dataset.busy === '1') return;
   teamEl.dataset.busy = '1';
-  teamEl.style.opacity = '0.6';
 
-  // Прогреваем кэш параллельно по всем 5 игрокам
   const results = await Promise.all(team.players.map(p => fetchPlayerWithRetry(p.faceit)));
 
   teamEl.dataset.busy = '0';
-  teamEl.style.opacity = '';
 
   modalTitle.textContent = team.name;
   modal.classList.remove('hidden');
@@ -85,8 +81,12 @@ async function openTeamModal(team, teamEl) {
   modalBody.innerHTML = team.players.map((p, i) => {
     const data = results[i];
     const avatar = data?.avatar ? `src="${escapeAttr(data.avatar)}"` : '';
-    const levelHtml = data ? levelIconHtml(data.level, false) : '';
-    const eloHtml = data ? `<span class="acc__elo">${data.elo ?? '—'}</span>` : `<span class="acc__loading">нет данных</span>`;
+    const levelHtml = data
+      ? levelIconHtml(data.level, false)
+      : `<span class="lvl-slot"><span class="lvl-text">—</span></span>`;
+    const eloHtml = data
+      ? `<span class="acc__elo">${data.elo ?? '—'}</span>`
+      : `<span class="acc__elo">—</span>`;
     return `
       <div class="acc" data-nick="${escapeAttr(p.faceit)}" ${data ? 'data-loaded="1"' : ''}>
         <div class="acc__head">
@@ -108,7 +108,6 @@ async function openTeamModal(team, teamEl) {
     `;
   }).join('');
 
-  // Сохраняем данные в элементы и навешиваем обработчики
   modalBody.querySelectorAll('.acc').forEach((accEl, i) => {
     const data = results[i];
     if (data) {
@@ -116,7 +115,6 @@ async function openTeamModal(team, teamEl) {
       accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
       attachLevelFallbacks(accEl);
     } else {
-      // даже если не загрузилось — при клике попробуем ещё раз
       accEl.querySelector('.acc__body').innerHTML =
         '<div style="color:var(--red);padding:10px">Не удалось загрузить данные. Кликните по игроку, чтобы попробовать снова.</div>';
     }
@@ -134,7 +132,7 @@ document.addEventListener('keydown', (e) => {
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-overlay').addEventListener('click', closeModal);
 
-// ========== Аккордеон: раскрытие уже загруженной карточки ==========
+// ========== Аккордеон ==========
 async function toggleAccordion(accEl, player) {
   const isOpen = accEl.classList.contains('open');
   if (isOpen) { accEl.classList.remove('open'); return; }
@@ -142,10 +140,8 @@ async function toggleAccordion(accEl, player) {
   modalBody.querySelectorAll('.acc.open').forEach(a => a.classList.remove('open'));
   accEl.classList.add('open');
 
-  // Если данные уже есть — раскрываем сразу
   if (accEl._data) return;
 
-  // Иначе пробуем дозагрузить
   accEl.classList.add('loading');
   const data = await fetchPlayerWithRetry(player.faceit);
   accEl.classList.remove('loading');
@@ -168,7 +164,7 @@ async function toggleAccordion(accEl, player) {
   attachLevelFallbacks(accEl.querySelector('.acc__body'));
 }
 
-// ========== Загрузка игрока с 3 попытками: 0с → 1.5с → 4с ==========
+// ========== Загрузка игрока с 3 попытками ==========
 async function fetchPlayerWithRetry(nickname) {
   const cacheKey = 'faceit:' + nickname.toLowerCase();
   const cached = lsGet(cacheKey);
@@ -186,14 +182,12 @@ async function fetchPlayerWithRetry(nickname) {
       }
       lsSet(cacheKey, data);
       return data;
-    } catch (e) {
-      // сеть отвалилась — продолжаем
-    }
+    } catch (e) {}
   }
   return null;
 }
 
-// ========== Карточка игрока (1-в-1 как на Faceit) ==========
+// ========== Карточка игрока ==========
 function renderPlayerCard(d) {
   const s = d.stats || {};
   const recent = (d.recent || []).slice(0, 30);
@@ -410,7 +404,6 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function escapeAttr(s) { return escapeHtml(s); }
-function cssEscape(s) { return String(s).replace(/["\\]/g, '\\$&'); }
 
 function normalizeFaceitUrl(url, nickname) {
   if (!url) return `https://www.faceit.com/ru/players/${encodeURIComponent(nickname)}`;
@@ -421,7 +414,6 @@ function normalizeFaceitUrl(url, nickname) {
   return u;
 }
 
-// Иконка уровня в фиксированном контейнере, чтобы не скакала высота
 function levelIconHtml(level, big = false) {
   const lvl = level ?? 1;
   const cls = big ? ' lvl-slot--big' : '';
