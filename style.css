@@ -1,0 +1,198 @@
+/* ========== База ========== */
+* { box-sizing: border-box; }
+:root {
+  --bg: #0f1115;
+  --bg-2: #15181f;
+  --card: #1a1d24;
+  --card-2: #21252e;
+  --border: #262b35;
+  --text: #e7eaf0;
+  --muted: #8a93a6;
+  --orange: #ff5a1f;
+  --orange-2: #ff7a3d;
+  --green: #2ecc71;
+  --red: #ff4757;
+}
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ========== Верхняя панель ========== */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, #15181f 0%, #0f1115 100%);
+  border-bottom: 1px solid var(--border);
+}
+.topbar__left { display: flex; align-items: baseline; gap: 12px; }
+.logo { color: var(--orange); font-size: 22px; }
+.topbar h1 { font-size: 17px; margin: 0; font-weight: 600; letter-spacing: .3px; }
+.subtitle { color: var(--muted); font-size: 12px; }
+.topbar__right { display: flex; gap: 10px; }
+#search {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: 8px;
+  min-width: 240px; outline: none;
+}
+#search:focus { border-color: var(--orange); }
+#refreshAll {
+  background: var(--orange); color: #fff; border: none;
+  padding: 8px 16px; border-radius: 8px; cursor: pointer;
+  font-weight: 600; transition: background .15s;
+}
+#refreshAll:hover { background: var(--orange-2); }
+
+/* ========== Статус ========== */
+.status {
+  padding: 16px 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.status.error { color: var(--red); }
+
+/* ========== Сетка команд ========== */
+.teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 12px;
+  padding: 0 24px 40px;
+}
+.team {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .15s, transform .1s;
+}
+.team:hover { border-color: #39404e; }
+.team.open { border-color: var(--orange); }
+
+.team__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.team__name { font-weight: 600; font-size: 15px; }
+.team__count { color: var(--muted); font-size: 12px; }
+.team__toggle { color: var(--muted); transition: transform .2s; }
+.team.open .team__toggle { transform: rotate(90deg); color: var(--orange); }
+
+.team__body {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+.team.open .team__body { display: block; }
+
+.player {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #1f232b;
+  cursor: pointer;
+  transition: background .12s;
+}
+.player:last-child { border-bottom: none; }
+.player:hover { background: var(--card-2); }
+.player__left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.player__avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #2a2f3a; object-fit: cover;
+  border: 1px solid var(--border);
+}
+.player__nick {
+  font-weight: 500; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 140px;
+}
+.player__lenza { color: var(--muted); font-size: 11px; }
+.player__stats { display: flex; gap: 12px; align-items: center; font-size: 12px; }
+.player__stats .lvl {
+  background: #2a2f3a; color: var(--text);
+  padding: 2px 7px; border-radius: 6px; font-weight: 600;
+}
+.player__stats .elo { color: var(--orange); font-weight: 600; }
+.player.loading .player__stats { color: var(--muted); }
+.player.error .player__stats { color: var(--red); }
+
+/* ========== Тултип-карточка ========== */
+.tooltip {
+  position: fixed;
+  z-index: 1000;
+  width: 360px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .12s, transform .12s;
+}
+.tooltip.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.tooltip.hidden { display: none; }
+
+.tooltip__inner {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+
+.card__header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.card__avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: #2a2f3a; object-fit: cover;
+  border: 2px solid var(--orange);
+}
+.card__identity { min-width: 0; }
+.card__nick { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card__meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.card__meta .lvl {
+  background: var(--orange); color: #fff; font-weight: 700;
+  padding: 2px 8px; border-radius: 6px; font-size: 12px;
+}
+.card__meta .elo { color: var(--orange); font-weight: 700; font-size: 14px; }
+
+.card__grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-bottom: 12px;
+}
+.cell {
+  background: var(--card-2);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+.cell__label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.cell__value { font-weight: 700; font-size: 14px; margin-top: 2px; }
+
+.card__section-title {
+  color: var(--muted); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .5px; margin: 10px 0 6px;
+}
+
+.recent { display: flex; gap: 3px; flex-wrap: wrap; }
+.recent__dot {
+  width: 12px; height: 12px; border-radius: 3px;
+  background: #2a2f3a;
+}
+.recent__dot.win { background: var(--green); }
+.recent__dot.loss { background: var(--red); }
+.recent__dot.unknown { background: #4a5160; }
+
+.chart { width: 100%; height: 70px; }
+.chart svg { width: 100%; height: 100%; display: block; }
+
+.card__footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+#tt-elo-delta { color: var(--muted); }
+#tt-elo-delta.plus { color: var(--green); }
+#tt-elo-delta.minus { color: var(--red); }
+#tt-faceit { color: var(--orange); text-decoration: none; font-weight: 600; }
+#tt-faceit:hover { text-decoration: underline; }
