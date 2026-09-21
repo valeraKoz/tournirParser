@@ -335,4 +335,31 @@ body.modal-open { overflow: hidden; }
 .rt { width: 100%; border-collapse: collapse; font-size: 11px; }
 .rt thead th {
   position: sticky; top: 0;
-  background: var
+  background: var(--card-2);
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.rt tbody td { padding: 5px 8px; border-bottom: 1px solid #1c1f26; white-space: nowrap; }
+.rt tbody tr:last-child td { border-bottom: none; }
+.rt tbody tr:hover { background: rgba(255,255,255,0.03); }
+.rt__result { font-weight: 700; }
+.rt__result.win { color: var(--green); }
+.rt__result.loss { color: var(--red); }
+.rt__date { color: var(--muted); }
+.rt__num { text-align: right; }
+
+.pc__footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+.pc__footer a { color: var(--orange); text-decoration: none; font-weight: 600; }
+.pc__footer a:hover { text-decoration: underline; }
+.pc__footer .muted { color: var(--muted); }
