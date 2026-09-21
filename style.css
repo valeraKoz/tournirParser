@@ -91,7 +91,7 @@ body.modal-open { overflow: hidden; }
 .modal__window {
   position: relative;
   z-index: 1;
-  width: min(720px, calc(100vw - 32px));
+  width: min(820px, calc(100vw - 32px));
   max-height: calc(100vh - 60px);
   background: var(--card);
   border: 1px solid var(--border);
@@ -153,7 +153,6 @@ body.modal-open { overflow: hidden; }
 .acc__nick { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
 .acc__lenza { color: var(--muted); font-size: 11px; }
 
-/* Правая часть шапки аккордеона — фиксированные колонки */
 .acc__right {
   display: grid;
   grid-template-columns: 28px 60px 16px;
@@ -187,7 +186,7 @@ body.modal-open { overflow: hidden; }
 .acc.open .acc__body { display: block; }
 .acc.loading .acc__body { display: none; }
 
-/* ========== Фиксированный слот для уровня ========== */
+/* ========== Слот уровня ========== */
 .lvl-slot {
   display: inline-flex;
   align-items: center;
@@ -282,42 +281,96 @@ body.modal-open { overflow: hidden; }
 }
 .pc__recent-title .muted { color: var(--muted); font-weight: 500; font-size: 11px; }
 
-.pc__dots-row {
-  display: flex; gap: 8px; align-items: center;
-  margin-bottom: 10px;
-  font-size: 12px;
-}
-.pc__dots-row .label { color: var(--muted); margin-right: 4px; }
-.pc__dots-row .delta { font-weight: 700; }
-.pc__dots-row .delta.plus { color: var(--green); }
-.pc__dots-row .delta.minus { color: var(--red); }
-.pc__dots {
-  display: flex; gap: 4px; flex-wrap: wrap;
-  margin-left: auto;
-}
-.pc__dot { width: 10px; height: 10px; border-radius: 3px; background: #2a2f3a; }
-.pc__dot.win { background: var(--green); }
-.pc__dot.loss { background: var(--red); }
-.pc__dot.unknown { background: #4a5160; }
-
-.pc__chart {
+/* ========== Блок графика Elo ========== */
+.pc__chart-block {
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px;
+  padding: 12px;
   margin-bottom: 12px;
 }
 .pc__chart-head {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 11px;
-  margin-bottom: 6px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: var(--muted);
 }
-.pc__chart-head .left { color: var(--muted); }
+.pc__chart-head .left { color: var(--text); font-weight: 600; }
+.pc__chart-head .delta { font-weight: 700; margin-left: 6px; }
+.pc__chart-head .delta.plus { color: var(--green); }
+.pc__chart-head .delta.minus { color: var(--red); }
 .pc__chart-head .w { color: var(--green); font-weight: 700; }
 .pc__chart-head .l { color: var(--red); font-weight: 700; }
-.pc__chart-svg { width: 100%; height: 80px; }
-.pc__chart-svg svg { width: 100%; height: 100%; display: block; }
+.pc__chart-head .sep { color: var(--muted); margin: 0 4px; }
 
+.chart-wrap {
+  position: relative;
+  width: 100%;
+}
+.chart-svg {
+  width: 100%;
+  height: 140px;
+  display: block;
+}
+.chart-dot {
+  cursor: pointer;
+  transition: r .12s ease;
+}
+.chart-dot:hover { r: 8; }
+
+/* Всплывающая подсказка над точкой */
+.chart-tip {
+  position: absolute;
+  z-index: 20;
+  min-width: 200px;
+  background: #14171d;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--text);
+  box-shadow: 0 12px 40px rgba(0,0,0,.7);
+  pointer-events: none;
+}
+.chart-tip.hidden { display: none; }
+.chart-tip .tip__date {
+  color: var(--muted);
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+.chart-tip .tip__score {
+  display: flex; align-items: center; gap: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 12px;
+}
+.chart-tip .tip__res {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: #4a5160;
+}
+.chart-tip .tip__res.win { background: var(--green); }
+.chart-tip .tip__res.loss { background: var(--red); }
+.chart-tip .tip__score-num { color: var(--text); }
+.chart-tip .tip__map { color: var(--muted); margin-left: auto; font-weight: 500; }
+.chart-tip .tip__row {
+  display: flex; justify-content: space-between;
+  padding: 3px 0;
+  font-size: 11px;
+}
+.chart-tip .tip__row > span:first-child { color: var(--muted); }
+.chart-tip .tip__row > span:last-child { font-weight: 600; }
+.chart-tip .tip__rating { color: var(--orange); }
+.chart-tip .tip__row .plus { color: var(--green); }
+.chart-tip .tip__row .minus { color: var(--red); }
+
+/* ========== Плитки метрик ========== */
 .pc__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -334,46 +387,6 @@ body.modal-open { overflow: hidden; }
 .pc__cell-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
 .pc__cell-value { font-weight: 700; font-size: 16px; }
 .pc__cell-value.big { font-size: 20px; }
-
-.pc__table-wrap {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-2);
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-.pc__table-head {
-  padding: 8px 10px;
-  background: var(--card-2);
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .3px;
-  display: flex; justify-content: space-between;
-}
-.pc__table-scroll { max-height: 240px; overflow-y: auto; }
-.rt { width: 100%; border-collapse: collapse; font-size: 11px; }
-.rt thead th {
-  position: sticky; top: 0;
-  background: var(--card-2);
-  color: var(--muted);
-  font-weight: 600;
-  text-align: left;
-  padding: 5px 8px;
-  border-bottom: 1px solid var(--border);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .3px;
-}
-.rt tbody td { padding: 5px 8px; border-bottom: 1px solid #1c1f26; white-space: nowrap; }
-.rt tbody tr:last-child td { border-bottom: none; }
-.rt tbody tr:hover { background: rgba(255,255,255,0.03); }
-.rt__result { font-weight: 700; }
-.rt__result.win { color: var(--green); }
-.rt__result.loss { color: var(--red); }
-.rt__date { color: var(--muted); }
-.rt__num { text-align: right; }
 
 .pc__footer {
   display: flex; justify-content: space-between; align-items: center;
