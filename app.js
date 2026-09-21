@@ -39,6 +39,8 @@ async function loadTeams() {
     teamsData = data.teams || [];
     renderTeams(teamsData);
     statusEl.textContent = `Команд: ${teamsData.length} · игроков: ${teamsData.reduce((a,t)=>a+t.players.length,0)}`;
+    // в фоне грузим всех игроков, чтобы средние ELO появились сразу
+    preloadAllPlayers();
   } catch (e) {
     statusEl.textContent = 'Ошибка загрузки команд: ' + e.message;
     statusEl.classList.add('error');
@@ -78,7 +80,7 @@ async function toggleTeam(teamEl, team) {
   teamEl.classList.add('open');
 
   const body = teamEl.querySelector('.team__body');
-  if (teamEl.dataset.loaded === '1') return; // уже загружено
+  if (teamEl.dataset.loaded === '1') return;
 
   body.innerHTML = team.players.map(p => `
     <div class="player loading" data-nick="${escapeAttr(p.faceit)}" data-lenza="${escapeAttr(p.lenza)}">
@@ -93,7 +95,6 @@ async function toggleTeam(teamEl, team) {
     </div>
   `).join('');
 
-  // обработчики
   body.querySelectorAll('.player').forEach(playerEl => {
     playerEl.addEventListener('mouseenter', (e) => showTooltip(playerEl, e));
     playerEl.addEventListener('mousemove', moveTooltip);
@@ -105,7 +106,6 @@ async function toggleTeam(teamEl, team) {
     });
   });
 
-  // грузим данные по каждому игроку (параллельно)
   await Promise.all(team.players.map((p) => loadPlayer(body, p)));
   updateTeamAvgElo(teamEl, body);
   teamEl.dataset.loaded = '1';
@@ -130,6 +130,7 @@ async function loadPlayer(container, player) {
       ${levelIconHtml(data.level)}
       <span class="elo">${data.elo ?? '—'}</span>
     `;
+    attachLevelFallbacks(el);
     el._data = data;
   } catch (e) {
     el.classList.remove('loading');
@@ -138,20 +139,65 @@ async function loadPlayer(container, player) {
   }
 }
 
-// ========== Средний ELO команды ==========
+// ========== Средний ELO команды (при раскрытии) ==========
 function updateTeamAvgElo(teamEl, body) {
   const elos = Array.from(body.querySelectorAll('.player'))
     .map(p => p._data?.elo)
     .filter(v => typeof v === 'number' && !isNaN(v));
   const badge = teamEl.querySelector('.team__avg');
   if (!badge) return;
-  if (!elos.length) {
-    badge.classList.add('hidden');
-    return;
-  }
+  if (!elos.length) { badge.classList.add('hidden'); return; }
   const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
   badge.textContent = '~ ' + avg + ' ELO';
   badge.classList.remove('hidden');
+}
+
+// ========== Проактивная загрузка всех игроков ==========
+async function preloadAllPlayers() {
+  const allPlayers = [];
+  teamsData.forEach(team => team.players.forEach(p => allPlayers.push(p.faceit)));
+  const unique = [...new Set(allPlayers.map(n => n.toLowerCase()))];
+
+  const CONCURRENCY = 4;
+  let idx = 0;
+  const results = {};
+
+  async function worker() {
+    while (idx < unique.length) {
+      const myIdx = idx++;
+      const nick = unique[myIdx];
+      const cacheKey = 'faceit:' + nick;
+      let data = lsGet(cacheKey);
+      try {
+        if (!data) {
+          const res = await fetch(API.faceit(nick));
+          data = await res.json();
+          if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+          lsSet(cacheKey, data);
+        }
+        if (typeof data.elo === 'number') results[nick] = data.elo;
+      } catch (e) { /* игнорируем */ }
+      if (Object.keys(results).length % 5 === 0) updateAllTeamsAvg(results);
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  updateAllTeamsAvg(results);
+}
+
+function updateAllTeamsAvg(eloMap) {
+  document.querySelectorAll('.team').forEach(teamEl => {
+    const teamName = teamEl.dataset.team;
+    const team = teamsData.find(t => t.name === teamName);
+    if (!team) return;
+    const elos = team.players
+      .map(p => eloMap[p.faceit.toLowerCase()])
+      .filter(v => typeof v === 'number');
+    if (!elos.length) return;
+    const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
+    const badge = teamEl.querySelector('.team__avg');
+    if (badge) { badge.textContent = '~ ' + avg + ' ELO'; badge.classList.remove('hidden'); }
+  });
 }
 
 // ========== Тултип ==========
@@ -188,6 +234,7 @@ function fillTooltip(d) {
   $('#tt-nick').textContent = d.nickname || '—';
   $('#tt-avatar').src = d.avatar || '';
   $('#tt-level').innerHTML = levelIconHtml(d.level, true);
+  attachLevelFallbacks($('#tt-level'));
   $('#tt-elo').textContent = (d.elo ? d.elo + ' ELO' : '— ELO');
 
   const s = d.stats || {};
@@ -198,16 +245,12 @@ function fillTooltip(d) {
   $('#tt-hs').textContent = s.hs != null ? s.hs + '%' : '—';
   $('#tt-adr').textContent = s.adr ?? '—';
 
-  // Полоска последних матчей
-  const recent = (d.recent || []).slice().reverse();
-  const dots = recent.map(m => {
-    const cls = m.winner === '1' ? 'win' : m.winner === '0' ? 'loss' : 'unknown';
-    return `<span class="recent__dot ${cls}" title="${m.score || ''}"></span>`;
-  }).join('');
-  $('#tt-recent').innerHTML = dots || '<span style="color:var(--muted);font-size:11px">нет данных</span>';
+  // Таблица последних матчей
+  const recent = (d.recent || []).slice(0, 30);
+  $('#tt-recent').innerHTML = renderRecentTable(recent);
 
   // График Elo
-  const eloPoints = recent.map(m => m.elo).filter(v => v != null);
+  const eloPoints = recent.map(m => m.elo).filter(v => v != null).reverse();
   $('#tt-chart').innerHTML = renderEloChart(eloPoints);
 
   // Дельта Elo
@@ -256,6 +299,54 @@ function renderEloChart(points) {
   `;
 }
 
+// ========== Таблица последних матчей ==========
+function renderRecentTable(matches) {
+  if (!matches.length) {
+    return '<div style="color:var(--muted);font-size:11px;padding:6px">нет данных</div>';
+  }
+  const rows = matches.map((m) => {
+    const isWin = m.winner === '1';
+    const isLoss = m.winner === '0';
+    const resultCls = isWin ? 'win' : isLoss ? 'loss' : '';
+    const resultTxt = isWin ? 'W' : isLoss ? 'L' : '—';
+    const date = m.finished_at
+      ? new Date(m.finished_at * 1000).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
+      : '—';
+    return `
+      <tr>
+        <td class="rt__result ${resultCls}">${resultTxt}</td>
+        <td class="rt__date">${date}</td>
+        <td class="rt__map">${m.map || '—'}</td>
+        <td class="rt__score">${m.score || '—'}</td>
+        <td class="rt__num">${m.kills != null && m.deaths != null ? `${m.kills}/${m.deaths}/${m.assists ?? 0}` : '—'}</td>
+        <td class="rt__num">${m.kd ?? '—'}</td>
+        <td class="rt__num">${m.kr ?? '—'}</td>
+        <td class="rt__num">${m.hs != null ? m.hs + '%' : '—'}</td>
+        <td class="rt__num">${m.adr ?? '—'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <table class="rt">
+      <thead>
+        <tr>
+          <th>Рез.</th>
+          <th>Дата</th>
+          <th>Карта</th>
+          <th>Счёт</th>
+          <th>K/D/A</th>
+          <th>K/D</th>
+          <th>K/R</th>
+          <th>HS%</th>
+          <th>ADR</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
 // ========== Поиск ==========
 searchEl.addEventListener('input', () => {
   const q = searchEl.value.trim().toLowerCase();
@@ -287,30 +378,38 @@ function escapeHtml(s) {
 function escapeAttr(s) { return escapeHtml(s); }
 function cssEscape(s) { return String(s).replace(/["\\]/g, '\\$&'); }
 
-// Нормализует URL профиля Faceit: убирает {lang}, убирает дублирование домена
+// Нормализует URL профиля Faceit
 function normalizeFaceitUrl(url, nickname) {
-  if (!url) {
-    return `https://www.faceit.com/ru/players/${encodeURIComponent(nickname)}`;
-  }
+  if (!url) return `https://www.faceit.com/ru/players/${encodeURIComponent(nickname)}`;
   let u = String(url).replace('{lang}', 'ru');
-  // если вдруг пришло без протокола — добавим
   if (!/^https?:\/\//i.test(u)) u = 'https://www.faceit.com' + (u.startsWith('/') ? '' : '/') + u;
-  // если пришло с двойным доменом — оставим только второй https://
   const match = u.match(/https?:\/\/www\.faceit\.com(https?:\/\/.+)$/i);
   if (match) u = match[1];
   return u;
 }
 
-// HTML иконки уровня: пробуем PNG, при ошибке — текстовый бейдж
+// HTML иконки уровня
 function levelIconHtml(level, big = false) {
   const lvl = level ?? 1;
-  const size = big ? 26 : 22;
-  const fallback = `<span class="lvl">${level ?? '—'}</span>`;
+  const size = big ? 40 : 26;
   return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
     src="/assets/levels/${lvl}_lvl.png"
     alt="LVL ${level ?? '—'}"
-    style="width:${size}px;height:${size}px"
-    onerror="this.onerror=null;this.outerHTML='${fallback.replace(/'/g, "\\'")}'" />`;
+    data-fallback="${escapeAttr(level ?? '—')}"
+    style="width:${size}px;height:${size}px" />`;
+}
+
+// Подменяет битые картинки уровней на текстовый бейдж
+function attachLevelFallbacks(root = document) {
+  root.querySelectorAll('img.lvl-icon:not([data-bound])').forEach(img => {
+    img.dataset.bound = '1';
+    img.addEventListener('error', () => {
+      const badge = document.createElement('span');
+      badge.className = 'lvl';
+      badge.textContent = img.dataset.fallback || '—';
+      img.replaceWith(badge);
+    });
+  });
 }
 
 // ========== Старт ==========
