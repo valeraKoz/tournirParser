@@ -30,6 +30,8 @@ function lsSet(key, value) {
   try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); } catch {}
 }
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // ========== Загрузка команд ==========
 async function loadTeams() {
   statusEl.textContent = 'Загрузка списка команд…';
@@ -104,68 +106,82 @@ document.addEventListener('keydown', (e) => {
 $('#modal-close').addEventListener('click', closeModal);
 $('#modal-overlay').addEventListener('click', closeModal);
 
-// ========== Аккордеон игрока ==========
+// ========== Аккордеон игрока с дозагрузкой ==========
 async function toggleAccordion(accEl, player) {
   const isOpen = accEl.classList.contains('open');
-  if (isOpen) {
-    accEl.classList.remove('open');
-    return;
-  }
-  // Закрываем остальные открытые
+  if (isOpen) { accEl.classList.remove('open'); return; }
+
   modalBody.querySelectorAll('.acc.open').forEach(a => a.classList.remove('open'));
   accEl.classList.add('open');
 
-  // Если уже загружено — просто показать
   if (accEl.dataset.loaded === '1') return;
 
-  // Загружаем данные
   accEl.classList.add('loading');
-  const cacheKey = 'faceit:' + player.faceit.toLowerCase();
-  let data = lsGet(cacheKey);
-  try {
-    if (!data) {
-      const res = await fetch(API.faceit(player.faceit));
-      data = await res.json();
-      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-      lsSet(cacheKey, data);
-    }
-    accEl.classList.remove('loading');
-    if (data.avatar) accEl.querySelector('.acc__avatar').src = data.avatar;
-    accEl.querySelector('.acc__right').innerHTML = `
-      ${levelIconHtml(data.level, false)}
-      <span class="acc__elo">${data.elo ?? '—'}</span>
-      <span class="acc__chev">▶</span>
-    `;
-    attachLevelFallbacks(accEl);
-    accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
-    attachLevelFallbacks(accEl.querySelector('.acc__body'));
-    accEl.dataset.loaded = '1';
-  } catch (e) {
+  accEl.querySelector('.acc__right').innerHTML = `<span class="acc__loading">загрузка…</span>`;
+
+  const data = await fetchPlayerWithRetry(player.faceit);
+
+  if (!data) {
     accEl.classList.remove('loading');
     accEl.classList.add('error');
-    accEl.querySelector('.acc__right').innerHTML = `<span>ошибка загрузки</span>`;
-    accEl.querySelector('.acc__body').innerHTML = `<div style="color:var(--red);padding:10px">${escapeHtml(e.message)}</div>`;
-    accEl.classList.add('open');
+    accEl.querySelector('.acc__right').innerHTML = `<span style="color:var(--red)">ошибка загрузки, кликните ещё раз</span>`;
+    accEl.classList.remove('open');
+    return;
   }
+
+  accEl.classList.remove('loading');
+  if (data.avatar) accEl.querySelector('.acc__avatar').src = data.avatar;
+  accEl.querySelector('.acc__right').innerHTML = `
+    ${levelIconHtml(data.level, false)}
+    <span class="acc__elo">${data.elo ?? '—'}</span>
+    <span class="acc__chev">▶</span>
+  `;
+  attachLevelFallbacks(accEl);
+  accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
+  attachLevelFallbacks(accEl.querySelector('.acc__body'));
+  accEl.dataset.loaded = '1';
+}
+
+// Загрузка с 3 попытками: 0с → 1.5с → 4с
+async function fetchPlayerWithRetry(nickname) {
+  const cacheKey = 'faceit:' + nickname.toLowerCase();
+  const cached = lsGet(cacheKey);
+  if (cached) return cached;
+
+  const delays = [0, 1500, 4000];
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i]) await sleep(delays[i]);
+    try {
+      const res = await fetch(API.faceit(nickname));
+      const data = await res.json();
+      if (!res.ok) {
+        // не ретраим явные 4xx, кроме 429
+        if (res.status !== 429 && res.status < 500) return null;
+        continue;
+      }
+      lsSet(cacheKey, data);
+      return data;
+    } catch (e) {
+      // сеть отвалилась — продолжаем
+    }
+  }
+  return null;
 }
 
 // ========== Карточка игрока (1-в-1 как на Faceit) ==========
 function renderPlayerCard(d) {
   const s = d.stats || {};
   const recent = (d.recent || []).slice(0, 30);
-  const recentReversed = recent.slice().reverse(); // старые → новые для полоски
+  const recentReversed = recent.slice().reverse();
 
-  // Полоска W/L
   const dots = recentReversed.map(m => {
     const cls = m.winner === '1' ? 'win' : m.winner === '0' ? 'loss' : 'unknown';
     return `<span class="pc__dot ${cls}"></span>`;
   }).join('');
 
-  // Счётчики W/L
   const wins = recentReversed.filter(m => m.winner === '1').length;
   const losses = recentReversed.filter(m => m.winner === '0').length;
 
-  // График Elo
   const eloPoints = recentReversed.map(m => m.elo).filter(v => v != null);
   const chartSvg = renderEloChart(eloPoints);
   let deltaHtml = '<span class="delta">—</span>';
@@ -187,7 +203,7 @@ function renderPlayerCard(d) {
 
       <div class="pc__elo-block">
         <div class="pc__level-wrap">
-          ${levelIconHtml(d.level, false, 64)}
+          ${levelIconHtml(d.level, true)}
         </div>
         <div class="pc__elo-num">${d.elo ?? '—'}</div>
       </div>
@@ -380,25 +396,30 @@ function normalizeFaceitUrl(url, nickname) {
   return u;
 }
 
-// Иконка уровня. size — опциональный размер в px
-function levelIconHtml(level, big = false, size = null) {
+// Иконка уровня в фиксированном контейнере, чтобы не скакала высота
+function levelIconHtml(level, big = false) {
   const lvl = level ?? 1;
-  const s = size ?? (big ? 40 : 26);
-  return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
-    src="/assets/levels/${lvl}_lvl.png"
-    alt="LVL ${level ?? '—'}"
-    data-fallback="${escapeAttr(level ?? '—')}"
-    style="width:${s}px;height:${s}px" />`;
+  const cls = big ? ' lvl-slot--big' : '';
+  return `<span class="lvl-slot${cls}">
+    <img class="lvl-icon"
+      src="/assets/levels/${lvl}_lvl.png"
+      alt="LVL ${level ?? '—'}"
+      data-fallback="${escapeAttr(level ?? '—')}" />
+  </span>`;
 }
 
+// Подменяет битые картинки уровней на текстовый бейдж ВНУТРИ контейнера
 function attachLevelFallbacks(root = document) {
   root.querySelectorAll('img.lvl-icon:not([data-bound])').forEach(img => {
     img.dataset.bound = '1';
     img.addEventListener('error', () => {
+      const slot = img.closest('.lvl-slot');
+      if (!slot) { img.remove(); return; }
       const badge = document.createElement('span');
-      badge.className = 'lvl';
+      badge.className = 'lvl-text';
       badge.textContent = img.dataset.fallback || '—';
-      img.replaceWith(badge);
+      slot.innerHTML = '';
+      slot.appendChild(badge);
     });
   });
 }
