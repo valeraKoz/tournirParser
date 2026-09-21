@@ -13,7 +13,6 @@ const searchEl = $('#search');
 const tooltip = $('#tooltip');
 
 let teamsData = [];
-let teamCache = {};  // { teamName: [ {nickname, data} ] }
 
 // ========== Кэш в localStorage ==========
 function lsGet(key) {
@@ -49,16 +48,16 @@ async function loadTeams() {
 // ========== Рендер сетки команд ==========
 function renderTeams(teams) {
   teamsEl.innerHTML = '';
-  teams.forEach((team, idx) => {
+  teams.forEach((team) => {
     const el = document.createElement('div');
     el.className = 'team';
     el.dataset.team = team.name;
 
     el.innerHTML = `
       <div class="team__head">
-        <div>
-          <div class="team__name">${escapeHtml(team.name)}</div>
-          <div class="team__count">${team.players.length} игроков</div>
+        <div class="team__title">
+          <span class="team__name">${escapeHtml(team.name)}</span>
+          <span class="team__avg hidden"></span>
         </div>
         <div class="team__toggle">▶</div>
       </div>
@@ -100,14 +99,15 @@ async function toggleTeam(teamEl, team) {
     playerEl.addEventListener('mousemove', moveTooltip);
     playerEl.addEventListener('mouseleave', hideTooltip);
     playerEl.addEventListener('click', () => {
-      const nick = playerEl.dataset.nick;
-      const url = playerEl.dataset.url || `https://www.faceit.com/ru/players/${encodeURIComponent(nick)}`;
+      const url = playerEl.dataset.url
+        || `https://www.faceit.com/ru/players/${encodeURIComponent(playerEl.dataset.nick)}`;
       window.open(url, '_blank', 'noopener');
     });
   });
 
   // грузим данные по каждому игроку (параллельно)
   await Promise.all(team.players.map((p) => loadPlayer(body, p)));
+  updateTeamAvgElo(teamEl, body);
   teamEl.dataset.loaded = '1';
 }
 
@@ -124,12 +124,10 @@ async function loadPlayer(container, player) {
       lsSet(cacheKey, data);
     }
     el.classList.remove('loading');
-    el.dataset.url = data.faceit_url
-  ? data.faceit_url.replace('{lang}', 'ru')
-  : `https://www.faceit.com/ru/players/${encodeURIComponent(player.faceit)}`;
+    el.dataset.url = normalizeFaceitUrl(data.faceit_url, player.faceit);
     if (data.avatar) el.querySelector('.player__avatar').src = data.avatar;
     el.querySelector('.player__stats').innerHTML = `
-      <span class="lvl">${data.level ?? '—'}</span>
+      ${levelIconHtml(data.level)}
       <span class="elo">${data.elo ?? '—'}</span>
     `;
     el._data = data;
@@ -138,6 +136,22 @@ async function loadPlayer(container, player) {
     el.classList.add('error');
     el.querySelector('.player__stats').innerHTML = `<span title="${escapeAttr(e.message)}">ошибка</span>`;
   }
+}
+
+// ========== Средний ELO команды ==========
+function updateTeamAvgElo(teamEl, body) {
+  const elos = Array.from(body.querySelectorAll('.player'))
+    .map(p => p._data?.elo)
+    .filter(v => typeof v === 'number' && !isNaN(v));
+  const badge = teamEl.querySelector('.team__avg');
+  if (!badge) return;
+  if (!elos.length) {
+    badge.classList.add('hidden');
+    return;
+  }
+  const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
+  badge.textContent = '~ ' + avg + ' ELO';
+  badge.classList.remove('hidden');
 }
 
 // ========== Тултип ==========
@@ -173,7 +187,7 @@ function moveTooltip(evt) {
 function fillTooltip(d) {
   $('#tt-nick').textContent = d.nickname || '—';
   $('#tt-avatar').src = d.avatar || '';
-  $('#tt-level').textContent = 'LVL ' + (d.level ?? '—');
+  $('#tt-level').innerHTML = levelIconHtml(d.level, true);
   $('#tt-elo').textContent = (d.elo ? d.elo + ' ELO' : '— ELO');
 
   const s = d.stats || {};
@@ -208,9 +222,7 @@ function fillTooltip(d) {
   }
 
   const link = $('#tt-faceit');
-  link.href = d.faceit_url
-    ? 'https://www.faceit.com' + d.faceit_url
-    : `https://www.faceit.com/ru/players/${encodeURIComponent(d.nickname)}`;
+  link.href = normalizeFaceitUrl(d.faceit_url, d.nickname);
 }
 
 // ========== SVG-график Elo ==========
@@ -259,8 +271,12 @@ searchEl.addEventListener('input', () => {
 // ========== Обновить ==========
 $('#refreshAll').addEventListener('click', () => {
   Object.keys(localStorage).forEach(k => { if (k.startsWith('faceit:')) localStorage.removeItem(k); });
-  teamCache = {};
-  document.querySelectorAll('.team').forEach(t => { t.dataset.loaded = '0'; t.classList.remove('open'); });
+  document.querySelectorAll('.team').forEach(t => {
+    t.dataset.loaded = '0';
+    t.classList.remove('open');
+    const avg = t.querySelector('.team__avg');
+    if (avg) { avg.textContent = ''; avg.classList.add('hidden'); }
+  });
   loadTeams();
 });
 
@@ -270,6 +286,32 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 function cssEscape(s) { return String(s).replace(/["\\]/g, '\\$&'); }
+
+// Нормализует URL профиля Faceit: убирает {lang}, убирает дублирование домена
+function normalizeFaceitUrl(url, nickname) {
+  if (!url) {
+    return `https://www.faceit.com/ru/players/${encodeURIComponent(nickname)}`;
+  }
+  let u = String(url).replace('{lang}', 'ru');
+  // если вдруг пришло без протокола — добавим
+  if (!/^https?:\/\//i.test(u)) u = 'https://www.faceit.com' + (u.startsWith('/') ? '' : '/') + u;
+  // если пришло с двойным доменом — оставим только второй https://
+  const match = u.match(/https?:\/\/www\.faceit\.com(https?:\/\/.+)$/i);
+  if (match) u = match[1];
+  return u;
+}
+
+// HTML иконки уровня: пробуем PNG, при ошибке — текстовый бейдж
+function levelIconHtml(level, big = false) {
+  const lvl = level ?? 1;
+  const size = big ? 26 : 22;
+  const fallback = `<span class="lvl">${level ?? '—'}</span>`;
+  return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
+    src="/assets/levels/level${lvl}.png"
+    alt="LVL ${level ?? '—'}"
+    style="width:${size}px;height:${size}px"
+    onerror="this.onerror=null;this.outerHTML='${fallback.replace(/'/g, "\\'")}'" />`;
+}
 
 // ========== Старт ==========
 loadTeams();
