@@ -1,0 +1,12 @@
+{
+  "name": "faceit-teams",
+  "version": "1.0.0",
+  "description": "Статистика команд Киберкубка партнёров Яндекса через Faceit API",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
