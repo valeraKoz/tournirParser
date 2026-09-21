@@ -114,7 +114,6 @@ async function openTeamModal(team, teamEl) {
       accEl._data = data;
       accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
       attachLevelFallbacks(accEl);
-      attachChartTooltips(accEl.querySelector('.acc__body'));
     } else {
       accEl.querySelector('.acc__body').innerHTML =
         '<div style="color:var(--red);padding:10px">Не удалось загрузить данные. Кликните по игроку, чтобы попробовать снова.</div>';
@@ -163,7 +162,6 @@ async function toggleAccordion(accEl, player) {
   attachLevelFallbacks(accEl);
   accEl.querySelector('.acc__body').innerHTML = renderPlayerCard(data);
   attachLevelFallbacks(accEl.querySelector('.acc__body'));
-  attachChartTooltips(accEl.querySelector('.acc__body'));
 }
 
 // ========== Загрузка игрока с 3 попытками ==========
@@ -192,23 +190,6 @@ async function fetchPlayerWithRetry(nickname) {
 // ========== Карточка игрока ==========
 function renderPlayerCard(d) {
   const s = d.stats || {};
-  const recent = (d.recent || []).slice(0, 30);
-  const recentReversed = recent.slice().reverse(); // старые → новые
-
-  const chartData = recentReversed
-    .map((m) => ({ ...m }))
-    .filter(m => m.elo != null);
-
-  const wins = recentReversed.filter(m => m.winner === '1').length;
-  const losses = recentReversed.filter(m => m.winner === '0').length;
-
-  const chartSvg = renderEloChartInteractive(chartData);
-  let deltaHtml = '<span class="delta">—</span>';
-  if (chartData.length >= 2) {
-    const delta = chartData[chartData.length - 1].elo - chartData[0].elo;
-    const cls = delta >= 0 ? 'plus' : 'minus';
-    deltaHtml = `<span class="delta ${cls}">${delta >= 0 ? '+' : ''}${delta} ELO</span>`;
-  }
 
   return `
     <div class="pc">
@@ -238,31 +219,7 @@ function renderPlayerCard(d) {
         </div>
       </div>
 
-      <div class="pc__recent-title">
-        <span>Недавние результаты</span>
-        <span class="muted">Последние матчи (${recent.length})</span>
-      </div>
-
-      <div class="pc__chart-block">
-        <div class="pc__chart-head">
-          <span class="left">Изменение Elo ${deltaHtml}</span>
-          <span>
-            <span class="w">${wins} W</span>
-            <span class="sep">/</span>
-            <span class="l">${losses} L</span>
-          </span>
-        </div>
-        <div class="chart-wrap">
-          ${chartSvg}
-          <div class="chart-tip hidden"></div>
-        </div>
-      </div>
-
       <div class="pc__grid">
-        <div class="pc__cell">
-          <div class="pc__cell-label">K/D/A</div>
-          <div class="pc__cell-value big">${avgKda(recent)}</div>
-        </div>
         <div class="pc__cell">
           <div class="pc__cell-label">K/D</div>
           <div class="pc__cell-value big">${s.kd ?? '—'}</div>
@@ -280,6 +237,10 @@ function renderPlayerCard(d) {
           <div class="pc__cell-value big">${s.adr ?? '—'}</div>
         </div>
         <div class="pc__cell">
+          <div class="pc__cell-label">Победы</div>
+          <div class="pc__cell-value big">${s.wins ?? '—'}</div>
+        </div>
+        <div class="pc__cell">
           <div class="pc__cell-label">Процент побед</div>
           <div class="pc__cell-value big">${s.win_rate != null ? s.win_rate + '%' : '—'}</div>
         </div>
@@ -291,147 +252,6 @@ function renderPlayerCard(d) {
       </div>
     </div>
   `;
-}
-
-function avgKda(recent) {
-  const arr = recent.filter(m => m.kills != null && m.deaths != null);
-  if (!arr.length) return '—';
-  const kills = arr.reduce((a, m) => a + Number(m.kills), 0);
-  const deaths = arr.reduce((a, m) => a + Number(m.deaths), 0);
-  const assists = arr.reduce((a, m) => a + Number(m.assists || 0), 0);
-  return `${Math.round(kills / arr.length)} / ${Math.round(deaths / arr.length)} / ${Math.round(assists / arr.length)}`;
-}
-
-// ========== Интерактивный график Elo с точками ==========
-function renderEloChartInteractive(data) {
-  if (!data.length) {
-    return '<div style="color:var(--muted);font-size:11px;padding:20px;text-align:center">нет данных</div>';
-  }
-  const W = 640, H = 140, padX = 20, padY = 24;
-  const points = data.map(m => m.elo);
-  const min = Math.min(...points), max = Math.max(...points);
-  const range = max - min || 1;
-  const stepX = (W - padX * 2) / Math.max(1, data.length - 1);
-
-  const coords = data.map((m, i) => {
-    const x = padX + i * stepX;
-    const y = H - padY - ((m.elo - min) / range) * (H - padY * 2);
-    return { x, y, match: m };
-  });
-
-  const pathD = coords.map((c, i) => (i === 0 ? `M${c.x},${c.y}` : `L${c.x},${c.y}`)).join(' ');
-  const areaD = pathD + ` L${coords[coords.length-1].x},${H} L${coords[0].x},${H} Z`;
-
-  const dots = coords.map((c, i) => {
-    const m = c.match;
-    const isWin = m.winner === '1';
-    const isLoss = m.winner === '0';
-    const color = isWin ? '#2ecc71' : isLoss ? '#ff4757' : '#8a93a6';
-    const prev = coords[i - 1];
-    const delta = prev ? (m.elo - prev.match.elo) : null;
-    const payload = {
-      date: m.finished_at,
-      winner: m.winner,
-      score: m.score,
-      map: m.map,
-      kills: m.kills,
-      deaths: m.deaths,
-      assists: m.assists,
-      kd: m.kd,
-      kr: m.kr,
-      hs: m.hs,
-      adr: m.adr,
-      elo: m.elo,
-      eloDelta: delta,
-    };
-    return `<circle class="chart-dot" cx="${c.x}" cy="${c.y}" r="6" fill="${color}" stroke="#0f1115" stroke-width="2" data-match='${escapeAttr(JSON.stringify(payload))}' />`;
-  }).join('');
-
-  return `
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="chart-svg">
-      <defs>
-        <linearGradient id="eloFill2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#ff5a1f" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#ff5a1f" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d="${areaD}" fill="url(#eloFill2)"/>
-      <path d="${pathD}" fill="none" stroke="#ff5a1f" stroke-width="2" stroke-linejoin="round"/>
-      ${dots}
-    </svg>
-  `;
-}
-
-function attachChartTooltips(root = document) {
-  root.querySelectorAll('.chart-dot:not([data-bound])').forEach(dot => {
-    dot.dataset.bound = '1';
-    dot.addEventListener('mouseenter', (e) => showChartTip(dot, e));
-    dot.addEventListener('mousemove', moveChartTip);
-    dot.addEventListener('mouseleave', hideChartTip);
-  });
-}
-
-function showChartTip(dot, evt) {
-  let m;
-  try { m = JSON.parse(dot.getAttribute('data-match')); } catch { return; }
-  const wrap = dot.closest('.chart-wrap');
-  if (!wrap) return;
-  const tip = wrap.querySelector('.chart-tip');
-  if (!tip) return;
-
-  const isWin = m.winner === '1';
-  const isLoss = m.winner === '0';
-  const resCls = isWin ? 'win' : isLoss ? 'loss' : '';
-  const resTxt = isWin ? 'W' : isLoss ? 'L' : '—';
-  const date = m.date
-    ? new Date(m.date * 1000).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    : '—';
-  const eloDeltaHtml = m.eloDelta != null
-    ? `<span class="${m.eloDelta >= 0 ? 'plus' : 'minus'}">${m.eloDelta >= 0 ? '+' : ''}${m.eloDelta}</span>`
-    : '—';
-
-  tip.innerHTML = `
-    <div class="tip__date">${date}</div>
-    <div class="tip__score">
-      <span class="tip__res ${resCls}">${resTxt}</span>
-      <span class="tip__score-num">${m.score || '—'}</span>
-      <span class="tip__map">${m.map || ''}</span>
-    </div>
-    <div class="tip__row"><span>Рейтинг</span><span class="tip__rating">${m.elo ?? '—'}</span></div>
-    <div class="tip__row"><span>У/С/А</span><span>${m.kills ?? '—'} / ${m.deaths ?? '—'} / ${m.assists ?? '—'}</span></div>
-    <div class="tip__row"><span>K/D</span><span>${m.kd ?? '—'}</span></div>
-    <div class="tip__row"><span>K/R</span><span>${m.kr ?? '—'}</span></div>
-    <div class="tip__row"><span>HS%</span><span>${m.hs != null ? m.hs + '%' : '—'}</span></div>
-    <div class="tip__row"><span>ADR</span><span>${m.adr ?? '—'}</span></div>
-    <div class="tip__row"><span>Изменение Elo</span>${eloDeltaHtml}</div>
-  `;
-  tip.classList.remove('hidden');
-  moveChartTip(evt);
-}
-
-function moveChartTip(evt) {
-  const wrap = evt.target.closest('.chart-wrap');
-  if (!wrap) return;
-  const tip = wrap.querySelector('.chart-tip');
-  if (!tip) return;
-  const rect = wrap.getBoundingClientRect();
-  const x = evt.clientX - rect.left;
-  const y = evt.clientY - rect.top;
-  const tipW = tip.offsetWidth || 220;
-  const tipH = tip.offsetHeight || 200;
-  let tx = x + 16;
-  let ty = y + 12;
-  if (tx + tipW > rect.width) tx = x - tipW - 16;
-  if (ty + tipH > rect.height) ty = rect.height - tipH - 6;
-  tip.style.left = Math.max(4, tx) + 'px';
-  tip.style.top  = Math.max(4, ty) + 'px';
-}
-
-function hideChartTip(evt) {
-  const wrap = evt.target.closest('.chart-wrap');
-  if (!wrap) return;
-  const tip = wrap.querySelector('.chart-tip');
-  if (tip) tip.classList.add('hidden');
 }
 
 // ========== Поиск ==========
