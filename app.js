@@ -80,7 +80,7 @@ async function openTeamModal(team, teamEl) {
 
   modalBody.innerHTML = team.players.map((p, i) => {
     const data = results[i];
-    const avatar = data?.avatar ? `src="${escapeAttr(data.avatar)}"` : '';
+    const avatar = `src="${escapeAttr(data?.avatar || '/assets/no-ava.jpg')}"`;
     const levelHtml = data
       ? levelIconHtml(data.level, false)
       : `<span class="lvl-slot"><span class="lvl-text">—</span></span>`;
