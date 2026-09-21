@@ -234,4 +234,8 @@ html, body {
 .rt tbody tr:hover { background: rgba(255,255,255,0.03); }
 .rt__result { font-weight: 700; }
 .rt__result.win { color: var(--green); }
-.rt__result.loss {
+.rt__result.loss { color: var(--red); }
+.rt__date { color: var(--muted); }
+.rt__map { color: var(--text); }
+.rt__score { color: var(--text); }
+.rt__num { text-align: right; color: var(--text); }
