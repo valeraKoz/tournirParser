@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Статистика команд Киберкубка партнёров Яндекса через Faceit API",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vercel dev"
   },
