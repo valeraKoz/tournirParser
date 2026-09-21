@@ -1,0 +1,417 @@
+{
+  "teams": [
+    { "name": "Team 1", "players": [
+      { "lenza": "@shur1man", "faceit": "shur1man" },
+      { "lenza": "skizzdovskiy", "faceit": "Marlin444" },
+      { "lenza": "@artemsg", "faceit": "ArtemSG" },
+      { "lenza": "@bad_cd", "faceit": "badCD" },
+      { "lenza": "@lucky86", "faceit": "Lucky05" }
+    ]},
+    { "name": "Team 2", "players": [
+      { "lenza": "@Krozieee", "faceit": "Krozieee" },
+      { "lenza": "gol12345", "faceit": "Gol22833" },
+      { "lenza": "almaz702", "faceit": "almaz712" },
+      { "lenza": "daimon1789", "faceit": "dristosin" },
+      { "lenza": "p46k4", "faceit": "p46k4" }
+    ]},
+    { "name": "Team 3", "players": [
+      { "lenza": "@CrazyWolt", "faceit": "CrazyWolt" },
+      { "lenza": "Nainai", "faceit": "NAINAI" },
+      { "lenza": "@makadamiaaa", "faceit": "makadamia" },
+      { "lenza": "Lexa_aka_444", "faceit": "Byb_LOL" },
+      { "lenza": "@comedia86", "faceit": "comedia86" }
+    ]},
+    { "name": "Team 4", "players": [
+      { "lenza": "@dominar400", "faceit": "Dominar_400" },
+      { "lenza": "Saqa_14", "faceit": "Qaja_Sakhata" },
+      { "lenza": "Cyxoyy", "faceit": "Cyxoyyy" },
+      { "lenza": "Dinskaya23man", "faceit": "Dinskman23" },
+      { "lenza": "_koltunov", "faceit": "1VincentvG1" }
+    ]},
+    { "name": "Team 5", "players": [
+      { "lenza": "@mill1litr", "faceit": "5mill1litrov" },
+      { "lenza": "Argentum_okda", "faceit": "MyArgentum" },
+      { "lenza": "Balxler", "faceit": "Balxler" },
+      { "lenza": "@vasco", "faceit": "Vasco4" },
+      { "lenza": "@assweg", "faceit": "QwertyRendy" }
+    ]},
+    { "name": "Team 6", "players": [
+      { "lenza": "@ANTIHYPE", "faceit": "ANTIHYPE9" },
+      { "lenza": "@lstdst", "faceit": "LastDuust" },
+      { "lenza": "@starodubskiy", "faceit": "Starodubskiy" },
+      { "lenza": "@alekseygolubev", "faceit": "BEEKEEPER90" },
+      { "lenza": "Recall", "faceit": "Hedgehog2103" }
+    ]},
+    { "name": "Team 7", "players": [
+      { "lenza": "@MADNIKOOO", "faceit": "MADNIKOOO" },
+      { "lenza": "@uga_buga", "faceit": "fakakazhdomu" },
+      { "lenza": "Rav", "faceit": "fransis77" },
+      { "lenza": "@franchaiser", "faceit": "Franchaiser" },
+      { "lenza": "Rasul03", "faceit": "Tailungg1" }
+    ]},
+    { "name": "Team 8", "players": [
+      { "lenza": "@nezzzoxx", "faceit": "NezZzoXx" },
+      { "lenza": "syn_berezy", "faceit": "Kotovka_Slal" },
+      { "lenza": "@ddwwkk", "faceit": "DDwwKK" },
+      { "lenza": "Klepalov666", "faceit": "Klepalov666" },
+      { "lenza": "@Wolf37", "faceit": "ProWolf37" }
+    ]},
+    { "name": "Team 9", "players": [
+      { "lenza": "@twistli_", "faceit": "Twistli" },
+      { "lenza": "@t4chmi", "faceit": "t4chme" },
+      { "lenza": "angel_pro", "faceit": "Xchantick" },
+      { "lenza": "@niolasha", "faceit": "n1kolam1" },
+      { "lenza": "@xtcyr", "faceit": "epiIept1c" }
+    ]},
+    { "name": "Team 10", "players": [
+      { "lenza": "g0dsyst3m", "faceit": "g0dsyst3m_" },
+      { "lenza": "@darkkpr1nceee", "faceit": "darkkpr1ncee" },
+      { "lenza": "@di_moon", "faceit": "DANGERVACCUM" },
+      { "lenza": "@saiperpaiper", "faceit": "SaiperPaiper" },
+      { "lenza": "tima_kumar", "faceit": "Low_tab_09" }
+    ]},
+    { "name": "Team 11", "players": [
+      { "lenza": "qwizz", "faceit": "qwizz42" },
+      { "lenza": "@thebreakhikita", "faceit": "TheBreakHi" },
+      { "lenza": "cub1q", "faceit": "cub1q" },
+      { "lenza": "Svejay", "faceit": "Svejey" },
+      { "lenza": "Bataky", "faceit": "Bataky" }
+    ]},
+    { "name": "Team 12", "players": [
+      { "lenza": "rojentw", "faceit": "rojentw" },
+      { "lenza": "Movetone", "faceit": "a7q3k-" },
+      { "lenza": "@vol4ara_", "faceit": "v0l_4ara" },
+      { "lenza": "@falloff", "faceit": "Junkie" },
+      { "lenza": "@scarteg", "faceit": "Scarteg" }
+    ]},
+    { "name": "Team 13", "players": [
+      { "lenza": "@rosee", "faceit": "vLr653265" },
+      { "lenza": "@xKrantyx", "faceit": "xKrantyx" },
+      { "lenza": "@timberman", "faceit": "TimberMan10" },
+      { "lenza": "@nothingSA", "faceit": "Nikantida" },
+      { "lenza": "NeGoD9Ii", "faceit": "NeGoD9Ii" }
+    ]},
+    { "name": "Team 14", "players": [
+      { "lenza": "Matruse", "faceit": "Brokerz" },
+      { "lenza": "@biggy", "faceit": "-cpaka" },
+      { "lenza": "@sergey121263", "faceit": "cab__9" },
+      { "lenza": "IKrapivin", "faceit": "MrP0tniy" },
+      { "lenza": "@triple_sec", "faceit": "Tripl_sec" }
+    ]},
+    { "name": "Team 15", "players": [
+      { "lenza": "zurab_1", "faceit": "tasty_cod" },
+      { "lenza": "@de_reone", "faceit": "de_reone" },
+      { "lenza": "@koly73", "faceit": "koly73rus" },
+      { "lenza": "@dalles", "faceit": "Dalles398" },
+      { "lenza": "SmokyRinat", "faceit": "djkarabell" }
+    ]},
+    { "name": "Team 16", "players": [
+      { "lenza": "arteus", "faceit": "Arteussssss" },
+      { "lenza": "karls0n", "faceit": "karls0n_" },
+      { "lenza": "bendy34213421", "faceit": "bendy3421" },
+      { "lenza": "chemodancrew69", "faceit": "chemodancrew" },
+      { "lenza": "nysmynchick1", "faceit": "NasMan165" }
+    ]},
+    { "name": "Team 17", "players": [
+      { "lenza": "@onytoto", "faceit": "ONYtoto" },
+      { "lenza": "MrSiders", "faceit": "MrSiderS" },
+      { "lenza": "@gul_ya", "faceit": "ffireOn" },
+      { "lenza": "petkau94", "faceit": "danilbushuev" },
+      { "lenza": "Numen", "faceit": "Numen09" }
+    ]},
+    { "name": "Team 18", "players": [
+      { "lenza": "akopylov", "faceit": "akopylov" },
+      { "lenza": "@don9ya", "faceit": "don9ya" },
+      { "lenza": "MixaSpB", "faceit": "DoedishPishi" },
+      { "lenza": "@edosik955", "faceit": "Edosik955" },
+      { "lenza": "Negodyai_0", "faceit": "Negodyai_0" }
+    ]},
+    { "name": "Team 19", "players": [
+      { "lenza": "badtrip", "faceit": "BadTrip_2701" },
+      { "lenza": "@larse", "faceit": "_larch_" },
+      { "lenza": "@zuzak", "faceit": "zizzle1337" },
+      { "lenza": "radiant", "faceit": "RadiantEye" },
+      { "lenza": "@demonnn", "faceit": "Demon_Irk2k" }
+    ]},
+    { "name": "Team 20", "players": [
+      { "lenza": "@gshgsh", "faceit": "N0NST0P0M" },
+      { "lenza": "@EvGoGen", "faceit": "EvGoGen" },
+      { "lenza": "@fowlens", "faceit": "_sialoune_" },
+      { "lenza": "flozyplay", "faceit": "FlozyPlay" },
+      { "lenza": "kaktysd", "faceit": "kaktysd" }
+    ]},
+    { "name": "Team 21", "players": [
+      { "lenza": "razumovsky", "faceit": "Streif_top" },
+      { "lenza": "@romaragu", "faceit": "RomaRAGU" },
+      { "lenza": "aL61k", "faceit": "aL61k" },
+      { "lenza": "@benkam", "faceit": "XlskM" },
+      { "lenza": "@algys", "faceit": "Simbaisky" }
+    ]},
+    { "name": "Team 22", "players": [
+      { "lenza": "@dk0303", "faceit": "klim6nse" },
+      { "lenza": "@sergey1987", "faceit": "deaf-muted" },
+      { "lenza": "Grilarmin", "faceit": "Grilarmin" },
+      { "lenza": "@modric", "faceit": "modric64" },
+      { "lenza": "@awakennn", "faceit": "awakeNNN" }
+    ]},
+    { "name": "Team 23", "players": [
+      { "lenza": "KeliQ", "faceit": "k31i" },
+      { "lenza": "@kerosin", "faceit": "keriosy666" },
+      { "lenza": "@ssass", "faceit": "SOYANARA" },
+      { "lenza": "thebaffle", "faceit": "TheBaffle" },
+      { "lenza": "usernamecj", "faceit": "Kimchi_One" }
+    ]},
+    { "name": "Team 24", "players": [
+      { "lenza": "xen0s", "faceit": "-Xen0s" },
+      { "lenza": "@easy_man", "faceit": "Easy_Man69" },
+      { "lenza": "@xhausted", "faceit": "xhausted_d" },
+      { "lenza": "@VladosDoodos", "faceit": "dard12343" },
+      { "lenza": "@sedoy_hitman", "faceit": "SeDoY_HiTMaN" }
+    ]},
+    { "name": "Team 25", "players": [
+      { "lenza": "w0apick", "faceit": "-w0ap" },
+      { "lenza": "joys9", "faceit": "JOYS9" },
+      { "lenza": "@rozoca", "faceit": "m1ow1" },
+      { "lenza": "tholmaps", "faceit": "Thol1" },
+      { "lenza": "@mynameyan", "faceit": "Yan1994" }
+    ]},
+    { "name": "Team 26", "players": [
+      { "lenza": "RuD1ckk", "faceit": "RuD1ckkk" },
+      { "lenza": "@ensre", "faceit": "Ensr" },
+      { "lenza": "784512", "faceit": "bloodcrusher" },
+      { "lenza": "Kavkazec", "faceit": "Kavkaz_pro" },
+      { "lenza": "@lumens", "faceit": "Lumen13" }
+    ]},
+    { "name": "Team 27", "players": [
+      { "lenza": "fadikda", "faceit": "fad1k666" },
+      { "lenza": "bombovozz", "faceit": "bomb0vozz" },
+      { "lenza": "besar1on", "faceit": "besarion97" },
+      { "lenza": "Anaivaster", "faceit": "Anaivaster" },
+      { "lenza": "Nullcycle", "faceit": "Nullcycle" }
+    ]},
+    { "name": "Team 28", "players": [
+      { "lenza": "@xChepi", "faceit": "4EPA" },
+      { "lenza": "@iskender", "faceit": "3izttf" },
+      { "lenza": "kimaa", "faceit": "Konstant22" },
+      { "lenza": "Verkho", "faceit": "Vercho" },
+      { "lenza": "@logic_404_", "faceit": "SalamAleyk1" }
+    ]},
+    { "name": "Team 29", "players": [
+      { "lenza": "str0ng007", "faceit": "str0ng007" },
+      { "lenza": "@rakuzanrr", "faceit": "BotFromVrn" },
+      { "lenza": "lotey", "faceit": "neLotey" },
+      { "lenza": "Antonio", "faceit": "Vdovinchii" },
+      { "lenza": "@dimkaaaa21", "faceit": "_TotPoc_1" }
+    ]},
+    { "name": "Team 30", "players": [
+      { "lenza": "@ilya1337", "faceit": "OilRigDem0n" },
+      { "lenza": "@kondrat_1", "faceit": "VlaTislaVich" },
+      { "lenza": "KYRENIE", "faceit": "KYRENIE2" },
+      { "lenza": "@iFura", "faceit": "iFura" },
+      { "lenza": "@galaxy_voice", "faceit": "Galaxy_Voice" }
+    ]},
+    { "name": "Team 31", "players": [
+      { "lenza": "sqweezzi", "faceit": "hyiiiyhgbvy" },
+      { "lenza": "trevogaowo", "faceit": "TrevogaOwO" },
+      { "lenza": "Stalker1", "faceit": "Sta1cker" },
+      { "lenza": "@Semgel", "faceit": "_Shamelles_" },
+      { "lenza": "Roman_Rufus", "faceit": "Rufus_Roman" }
+    ]},
+    { "name": "Team 32", "players": [
+      { "lenza": "gorbl4", "faceit": "g0rbl4" },
+      { "lenza": "Hookahstil", "faceit": "Hookah_Stil" },
+      { "lenza": "incornashon", "faceit": "Incornashon" },
+      { "lenza": "Alexxey", "faceit": "Comlav" },
+      { "lenza": "Tony_Vegas97", "faceit": "Tony_Vegas" }
+    ]},
+    { "name": "Team 33", "players": [
+      { "lenza": "Ktz", "faceit": "Kashak__" },
+      { "lenza": "@stefanchik", "faceit": "stefanchikk" },
+      { "lenza": "@khovr", "faceit": "khovr" },
+      { "lenza": "Emdav", "faceit": "e4dd" },
+      { "lenza": "@jacob555", "faceit": "Trench_Def" }
+    ]},
+    { "name": "Team 34", "players": [
+      { "lenza": "parenyon", "faceit": "paReNY0N" },
+      { "lenza": "_st00p3k__", "faceit": "_st00p3k__" },
+      { "lenza": "@sappwhat", "faceit": "Stonemad" },
+      { "lenza": "***WhiteGold***", "faceit": "EzGnome" },
+      { "lenza": "perfect_yak", "faceit": "alexterious" }
+    ]},
+    { "name": "Team 35", "players": [
+      { "lenza": "@darks0ul", "faceit": "1wen4arRr" },
+      { "lenza": "@artemmoch", "faceit": "KARMAXGGGOD" },
+      { "lenza": "bezrukiy", "faceit": "Svarhik" },
+      { "lenza": "kontora32", "faceit": "KoHTopa32" },
+      { "lenza": "ex1led", "faceit": "A8ema" }
+    ]},
+    { "name": "Team 36", "players": [
+      { "lenza": "@crazylalka", "faceit": "CrazyLaLka" },
+      { "lenza": "Nozimjon77", "faceit": "ccpsychozz" },
+      { "lenza": "Jerenemo", "faceit": "Gerenemo" },
+      { "lenza": "Mehonipopa", "faceit": "Mehoni" },
+      { "lenza": "@balegdan", "faceit": "PopandBalda" }
+    ]},
+    { "name": "Team 37", "players": [
+      { "lenza": "acidhouze_", "faceit": "acidhouze_" },
+      { "lenza": "ne0z1p", "faceit": "ne0z1p-" },
+      { "lenza": "Dzhovidshirinov", "faceit": "dzhovid" },
+      { "lenza": "Pablo91", "faceit": "Pablos112" },
+      { "lenza": "@vovan72", "faceit": "Res0nans" }
+    ]},
+    { "name": "Team 38", "players": [
+      { "lenza": "tankograd", "faceit": "TANKOGRADDDD" },
+      { "lenza": "@serega_34godika", "faceit": "Serega_34Let" },
+      { "lenza": "@oxota", "faceit": "oxoTa12rus" },
+      { "lenza": "Vakiri", "faceit": "Vakirii" },
+      { "lenza": "@vvulf", "faceit": "vvuIf" }
+    ]},
+    { "name": "Team 39", "players": [
+      { "lenza": "@style092", "faceit": "Styleromesh" },
+      { "lenza": "gvrlvdmv", "faceit": "gvrlv5" },
+      { "lenza": "@xsilen", "faceit": "xSilenn" },
+      { "lenza": "Saytama", "faceit": "IkariSindz" },
+      { "lenza": "@FeroPont", "faceit": "Andron274" }
+    ]},
+    { "name": "Team 40", "players": [
+      { "lenza": "@sun_rise_vlg", "faceit": "sun_rise_vlg" },
+      { "lenza": "@liffan", "faceit": "Liffansup" },
+      { "lenza": "@s1ushayu", "faceit": "Gridik" },
+      { "lenza": "stunner", "faceit": "Frozen11980" },
+      { "lenza": "7_navarro_7", "faceit": "7_NAVARRO_7" }
+    ]},
+    { "name": "Team 41", "players": [
+      { "lenza": "rroobbee1", "faceit": "rroobbee" },
+      { "lenza": "Ramses666", "faceit": "pencil666" },
+      { "lenza": "@grantnoob", "faceit": "360MLGBOOS" },
+      { "lenza": "tekvol", "faceit": "TekVoL" },
+      { "lenza": "Minart", "faceit": "Retsiger" }
+    ]},
+    { "name": "Team 42", "players": [
+      { "lenza": "@semio_95", "faceit": "Semi0_" },
+      { "lenza": "@mihalex", "faceit": "BceXopouuo" },
+      { "lenza": "@Dvoid", "faceit": "Dvoid1" },
+      { "lenza": "VanySolv", "faceit": "VanySolv" },
+      { "lenza": "kyosusl1k", "faceit": "kyoususl1k" }
+    ]},
+    { "name": "Team 43", "players": [
+      { "lenza": "Polef", "faceit": "PoLeF_" },
+      { "lenza": "coyodee3ee", "faceit": "coyod3" },
+      { "lenza": "dontstop", "faceit": "Dontstoper" },
+      { "lenza": "@koranton9292", "faceit": "koranton92" },
+      { "lenza": "@s_nick", "faceit": "s_nick" }
+    ]},
+    { "name": "Team 44", "players": [
+      { "lenza": "@barkod1", "faceit": "Barkod1" },
+      { "lenza": "@nev0zdano", "faceit": "nev0zdano" },
+      { "lenza": "Blood warrior", "faceit": "Blodwarrior9" },
+      { "lenza": "Johny522", "faceit": "johnyk019" },
+      { "lenza": "@kasp9r", "faceit": "loveyousoo" }
+    ]},
+    { "name": "Team 45", "players": [
+      { "lenza": "mesaw", "faceit": "risen1333" },
+      { "lenza": "KoliBrrri", "faceit": "KoliBrrri" },
+      { "lenza": "dmitry_k_8", "faceit": "dmitry_k_8" },
+      { "lenza": "bogdart", "faceit": "b0gdart" },
+      { "lenza": "@me98ed", "faceit": "me98ed" }
+    ]},
+    { "name": "Team 46", "players": [
+      { "lenza": "@ftxc_013", "faceit": "-relezzz" },
+      { "lenza": "patatb14", "faceit": "patatbI4" },
+      { "lenza": "@shevi", "faceit": "bleckjecki" },
+      { "lenza": "Bulkas", "faceit": "Buulkass" },
+      { "lenza": "whatislove54", "faceit": "VlaDDmy_YT" }
+    ]},
+    { "name": "Team 47", "players": [
+      { "lenza": "@maderwase", "faceit": "Maderwase" },
+      { "lenza": "@gatothegoat", "faceit": "kseROX7" },
+      { "lenza": "@f0xx1z0r7norway", "faceit": "f0xx1Z0R" },
+      { "lenza": "@Rellleik", "faceit": "Rellleik" },
+      { "lenza": "XADN_", "faceit": "TruBABKA" }
+    ]},
+    { "name": "Team 48", "players": [
+      { "lenza": "Krima", "faceit": "krimA-" },
+      { "lenza": "@chinasky", "faceit": "m_chinasky" },
+      { "lenza": "YaPoltorashka", "faceit": "GigantBoy" },
+      { "lenza": "2poy333", "faceit": "20CoOlKid20" },
+      { "lenza": "Singl98", "faceit": "Singl" }
+    ]},
+    { "name": "Team 49", "players": [
+      { "lenza": "Arssi", "faceit": "Arssi69" },
+      { "lenza": "@mishap", "faceit": "Kamaz_Govna7" },
+      { "lenza": "t0dea", "faceit": "Dean_t" },
+      { "lenza": "@annamed", "faceit": "annamed1" },
+      { "lenza": "@darner55", "faceit": "Lil3WG" }
+    ]},
+    { "name": "Team 50", "players": [
+      { "lenza": "lemeha", "faceit": "-lemth" },
+      { "lenza": "@Dcvb500", "faceit": "snickehrz" },
+      { "lenza": "@bugor_", "faceit": "BugorXXX" },
+      { "lenza": "@andr777", "faceit": "Chief_Keef_x" },
+      { "lenza": "spenser_15", "faceit": "spenser151" }
+    ]},
+    { "name": "Team 51", "players": [
+      { "lenza": "@theorist", "faceit": "-theorist" },
+      { "lenza": "@Gomer.aol", "faceit": "GomerAOL" },
+      { "lenza": "a1eex", "faceit": "a1eex_x" },
+      { "lenza": "@akolla", "faceit": "Alloe_f" },
+      { "lenza": "@gomozov", "faceit": "assault_1337" }
+    ]},
+    { "name": "Team 52", "players": [
+      { "lenza": "@66neverluv", "faceit": "shiawasse" },
+      { "lenza": "@brasko01", "faceit": "brasko07" },
+      { "lenza": "@livanmina", "faceit": "Livanmina007" },
+      { "lenza": "Gogajkeee", "faceit": "5em3n_of_god" },
+      { "lenza": "Krucome", "faceit": "Slavarik" }
+    ]},
+    { "name": "Team 53", "players": [
+      { "lenza": "focuss", "faceit": "FOcuSS66-" },
+      { "lenza": "vovchik111", "faceit": "--DEADSHOT__" },
+      { "lenza": "krionel", "faceit": "Arca__" },
+      { "lenza": "Alay911", "faceit": "Alay911" },
+      { "lenza": "@l1or3d", "faceit": "Lord_Damage" }
+    ]},
+    { "name": "Team 54", "players": [
+      { "lenza": "dojic", "faceit": "dojic" },
+      { "lenza": "@gellendwagen", "faceit": "Dipper" },
+      { "lenza": "@timqa", "faceit": "emelya9270" },
+      { "lenza": "@_ganz_", "faceit": "GanZ_0" },
+      { "lenza": "@trilla", "faceit": "ASAP_ManaGuy" }
+    ]},
+    { "name": "Team 55", "players": [
+      { "lenza": "@str1k", "faceit": "LoozSTr1c" },
+      { "lenza": "Gasparov", "faceit": "Gassparov" },
+      { "lenza": "Vlad161rus", "faceit": "VLAD161RUS2" },
+      { "lenza": "DostoPochtenyi", "faceit": "_SiZeD_" },
+      { "lenza": "Karandashik", "faceit": "Korobka18" }
+    ]},
+    { "name": "Team 56", "players": [
+      { "lenza": "denx3", "faceit": "denx" },
+      { "lenza": "grenn", "faceit": "Grenn" },
+      { "lenza": "@masyanich", "faceit": "MASYANICHH" },
+      { "lenza": "@_cool_boy_", "faceit": "beton999" },
+      { "lenza": "@crazyboris", "faceit": "TwonySix" }
+    ]},
+    { "name": "Team 57", "players": [
+      { "lenza": "ragejuice", "faceit": "RageJuice" },
+      { "lenza": "a1exme1ster", "faceit": "Automativo" },
+      { "lenza": "aleksei1979", "faceit": "aleks19797" },
+      { "lenza": "@anubis763", "faceit": "papa_anubis" },
+      { "lenza": "SaI10rMooN", "faceit": "_Chewi" }
+    ]},
+    { "name": "Team 58", "players": [
+      { "lenza": "@fail_", "faceit": "faiL_" },
+      { "lenza": "@shyr1k", "faceit": "-shyr1k666" },
+      { "lenza": "lxrs7", "faceit": "RSLXXX" },
+      { "lenza": "@yasn0", "faceit": "MaMyLuK" },
+      { "lenza": "itsframe", "faceit": "ItsFramep" }
+    ]},
+    { "name": "Team 59", "players": [
+      { "lenza": "Ambr4ce", "faceit": "Ambr4ce" },
+      { "lenza": "slashdep", "faceit": "slashdep" },
+      { "lenza": "rei2022", "faceit": "426V" },
+      { "lenza": "@kevin83", "faceit": "kevinkline83" },
+      { "lenza": "Om55kM4chine", "faceit": "AnotherMazda" }
+    ]},
+    { "name": "Team 60", "players": [
+      { "lenza": "@maks_tit", "faceit": "Go0dDays"
