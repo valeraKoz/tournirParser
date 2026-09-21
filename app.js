@@ -125,8 +125,8 @@ async function loadPlayer(container, player) {
     }
     el.classList.remove('loading');
     el.dataset.url = data.faceit_url
-      ? 'https://www.faceit.com' + data.faceit_url
-      : `https://www.faceit.com/ru/players/${encodeURIComponent(player.faceit)}`;
+  ? data.faceit_url.replace('{lang}', 'ru')
+  : `https://www.faceit.com/ru/players/${encodeURIComponent(player.faceit)}`;
     if (data.avatar) el.querySelector('.player__avatar').src = data.avatar;
     el.querySelector('.player__stats').innerHTML = `
       <span class="lvl">${data.level ?? '—'}</span>
