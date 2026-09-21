@@ -118,22 +118,28 @@ html, body {
 .player__stats { display: flex; gap: 8px; align-items: center; font-size: 12px; }
 .player__stats .lvl {
   background: #2a2f3a; color: var(--text);
-  padding: 2px 7px; border-radius: 6px; font-weight: 600;
-  font-size: 11px;
+  padding: 2px 7px; border-radius: 6px; font-weight: 600; font-size: 11px;
 }
 .player__stats .elo { color: var(--orange); font-weight: 600; }
 .player.loading .player__stats { color: var(--muted); }
 .player.error .player__stats { color: var(--red); }
 
 /* Иконки уровня */
-.lvl-icon { width: 22px; height: 22px; vertical-align: middle; object-fit: contain; }
-.lvl-icon--big { width: 26px; height: 26px; }
+.lvl-icon {
+  width: 26px; height: 26px;
+  vertical-align: middle;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+.lvl-icon--big { width: 40px; height: 40px; }
 
 /* ========== Тултип-карточка ========== */
 .tooltip {
   position: fixed;
   z-index: 1000;
-  width: 360px;
+  width: 560px;
   pointer-events: none;
   opacity: 0;
   transform: translateY(4px);
@@ -160,9 +166,10 @@ html, body {
 .card__nick { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card__meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
 .card__meta .lvl {
-  background: var(--orange); color: #fff; font-weight: 700;
-  padding: 2px 8px; border-radius: 6px; font-size: 12px;
+  background: transparent; color: var(--text);
+  font-weight: 700; font-size: 14px; padding: 0;
 }
+.card__meta .lvl-icon--big { margin-right: 2px; }
 .card__meta .elo { color: var(--orange); font-weight: 700; font-size: 14px; }
 
 .card__grid {
@@ -178,12 +185,6 @@ html, body {
   letter-spacing: .5px; margin: 10px 0 6px;
 }
 
-.recent { display: flex; gap: 3px; flex-wrap: wrap; }
-.recent__dot { width: 12px; height: 12px; border-radius: 3px; background: #2a2f3a; }
-.recent__dot.win { background: var(--green); }
-.recent__dot.loss { background: var(--red); }
-.recent__dot.unknown { background: #4a5160; }
-
 .chart { width: 100%; height: 70px; }
 .chart svg { width: 100%; height: 100%; display: block; }
 
@@ -198,3 +199,39 @@ html, body {
 #tt-elo-delta.minus { color: var(--red); }
 #tt-faceit { color: var(--orange); text-decoration: none; font-weight: 600; }
 #tt-faceit:hover { text-decoration: underline; }
+
+/* ========== Таблица последних матчей ========== */
+.recent-table {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-2);
+}
+.rt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.rt thead th {
+  position: sticky; top: 0;
+  background: var(--card-2);
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.rt tbody td {
+  padding: 5px 6px;
+  border-bottom: 1px solid #1c1f26;
+  white-space: nowrap;
+}
+.rt tbody tr:last-child td { border-bottom: none; }
+.rt tbody tr:hover { background: rgba(255,255,255,0.03); }
+.rt__result { font-weight: 700; }
+.rt__result.win { color: var(--green); }
+.rt__result.loss {
