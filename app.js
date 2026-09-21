@@ -4,17 +4,22 @@ const API = {
   faceit: (nickname) => `/api/faceit?nickname=${encodeURIComponent(nickname)}`,
 };
 
-const CACHE_TTL = 10 * 60 * 1000; // 10 минут на клиенте
+const CACHE_TTL = 10 * 60 * 1000; // 10 минут
 
 const $ = (sel) => document.querySelector(sel);
 const teamsEl = $('#teams');
 const statusEl = $('#status');
 const searchEl = $('#search');
 const tooltip = $('#tooltip');
+const modal = $('#modal');
+const modalBody = $('#modal-body');
+const modalTitle = $('#modal-title');
+const modalAvg = $('#modal-avg');
 
 let teamsData = [];
+let currentModalTeam = null;
 
-// ========== Кэш в localStorage ==========
+// ========== Кэш ==========
 function lsGet(key) {
   try {
     const raw = localStorage.getItem(key);
@@ -28,7 +33,7 @@ function lsSet(key, value) {
   try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); } catch {}
 }
 
-// ========== Загрузка списка команд ==========
+// ========== Загрузка команд ==========
 async function loadTeams() {
   statusEl.textContent = 'Загрузка списка команд…';
   statusEl.classList.remove('error');
@@ -39,7 +44,6 @@ async function loadTeams() {
     teamsData = data.teams || [];
     renderTeams(teamsData);
     statusEl.textContent = `Команд: ${teamsData.length} · игроков: ${teamsData.reduce((a,t)=>a+t.players.length,0)}`;
-    // в фоне грузим всех игроков, чтобы средние ELO появились сразу
     preloadAllPlayers();
   } catch (e) {
     statusEl.textContent = 'Ошибка загрузки команд: ' + e.message;
@@ -47,55 +51,48 @@ async function loadTeams() {
   }
 }
 
-// ========== Рендер сетки команд ==========
+// ========== Рендер компактной сетки команд ==========
 function renderTeams(teams) {
   teamsEl.innerHTML = '';
   teams.forEach((team) => {
     const el = document.createElement('div');
     el.className = 'team';
     el.dataset.team = team.name;
-
     el.innerHTML = `
-      <div class="team__head">
-        <div class="team__title">
-          <span class="team__name">${escapeHtml(team.name)}</span>
-          <span class="team__avg hidden"></span>
-        </div>
-        <div class="team__toggle">▶</div>
+      <div class="team__title">
+        <span class="team__name">${escapeHtml(team.name)}</span>
+        <span class="team__avg hidden"></span>
       </div>
-      <div class="team__body"></div>
+      <span class="team__arrow">→</span>
     `;
-
-    el.querySelector('.team__head').addEventListener('click', () => toggleTeam(el, team));
+    el.addEventListener('click', () => openTeamModal(team, el));
     teamsEl.appendChild(el);
   });
 }
 
-async function toggleTeam(teamEl, team) {
-  const isOpen = teamEl.classList.contains('open');
-  if (isOpen) {
-    teamEl.classList.remove('open');
-    return;
-  }
-  teamEl.classList.add('open');
+// ========== Открытие модалки команды ==========
+async function openTeamModal(team, teamEl) {
+  currentModalTeam = team;
+  modalTitle.textContent = team.name;
+  modalAvg.classList.add('hidden');
+  modalAvg.textContent = '';
+  modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
 
-  const body = teamEl.querySelector('.team__body');
-  if (teamEl.dataset.loaded === '1') return;
-
-  body.innerHTML = team.players.map(p => `
-    <div class="player loading" data-nick="${escapeAttr(p.faceit)}" data-lenza="${escapeAttr(p.lenza)}">
-      <div class="player__left">
-        <img class="player__avatar" alt="" />
-        <div>
-          <div class="player__nick">${escapeHtml(p.faceit)}</div>
-          <div class="player__lenza">${escapeHtml(p.lenza)}</div>
+  modalBody.innerHTML = team.players.map(p => `
+    <div class="modal-player loading" data-nick="${escapeAttr(p.faceit)}" data-lenza="${escapeAttr(p.lenza)}">
+      <div class="modal-player__left">
+        <img class="modal-player__avatar" alt="" />
+        <div class="modal-player__info">
+          <div class="modal-player__nick">${escapeHtml(p.faceit)}</div>
+          <div class="modal-player__lenza">${escapeHtml(p.lenza)}</div>
         </div>
       </div>
-      <div class="player__stats"><span>загрузка…</span></div>
+      <div class="modal-player__stats"><span>загрузка…</span></div>
     </div>
   `).join('');
 
-  body.querySelectorAll('.player').forEach(playerEl => {
+  modalBody.querySelectorAll('.modal-player').forEach(playerEl => {
     playerEl.addEventListener('mouseenter', (e) => showTooltip(playerEl, e));
     playerEl.addEventListener('mousemove', moveTooltip);
     playerEl.addEventListener('mouseleave', hideTooltip);
@@ -106,13 +103,37 @@ async function toggleTeam(teamEl, team) {
     });
   });
 
-  await Promise.all(team.players.map((p) => loadPlayer(body, p)));
-  updateTeamAvgElo(teamEl, body);
-  teamEl.dataset.loaded = '1';
+  await Promise.all(team.players.map((p) => loadModalPlayer(p)));
+
+  // Обновляем средний ELO в модалке и в карточке сетки
+  const elos = Array.from(modalBody.querySelectorAll('.modal-player'))
+    .map(p => p._data?.elo)
+    .filter(v => typeof v === 'number' && !isNaN(v));
+  if (elos.length) {
+    const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
+    modalAvg.textContent = '~ ' + avg + ' ELO';
+    modalAvg.classList.remove('hidden');
+    const badge = teamEl.querySelector('.team__avg');
+    if (badge) { badge.textContent = '~ ' + avg + ' ELO'; badge.classList.remove('hidden'); }
+  }
 }
 
-async function loadPlayer(container, player) {
-  const el = container.querySelector(`.player[data-nick="${cssEscape(player.faceit)}"]`);
+function closeModal() {
+  modal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  hideTooltip();
+  currentModalTeam = null;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+});
+$('#modal-close').addEventListener('click', closeModal);
+$('#modal-overlay').addEventListener('click', closeModal);
+
+// ========== Загрузка одного игрока в модалку ==========
+async function loadModalPlayer(player) {
+  const el = modalBody.querySelector(`.modal-player[data-nick="${cssEscape(player.faceit)}"]`);
   if (!el) return;
   const cacheKey = 'faceit:' + player.faceit.toLowerCase();
   let data = lsGet(cacheKey);
@@ -125,9 +146,9 @@ async function loadPlayer(container, player) {
     }
     el.classList.remove('loading');
     el.dataset.url = normalizeFaceitUrl(data.faceit_url, player.faceit);
-    if (data.avatar) el.querySelector('.player__avatar').src = data.avatar;
-    el.querySelector('.player__stats').innerHTML = `
-      ${levelIconHtml(data.level)}
+    if (data.avatar) el.querySelector('.modal-player__avatar').src = data.avatar;
+    el.querySelector('.modal-player__stats').innerHTML = `
+      ${levelIconHtml(data.level, true)}
       <span class="elo">${data.elo ?? '—'}</span>
     `;
     attachLevelFallbacks(el);
@@ -135,24 +156,11 @@ async function loadPlayer(container, player) {
   } catch (e) {
     el.classList.remove('loading');
     el.classList.add('error');
-    el.querySelector('.player__stats').innerHTML = `<span title="${escapeAttr(e.message)}">ошибка</span>`;
+    el.querySelector('.modal-player__stats').innerHTML = `<span title="${escapeAttr(e.message)}">ошибка</span>`;
   }
 }
 
-// ========== Средний ELO команды (при раскрытии) ==========
-function updateTeamAvgElo(teamEl, body) {
-  const elos = Array.from(body.querySelectorAll('.player'))
-    .map(p => p._data?.elo)
-    .filter(v => typeof v === 'number' && !isNaN(v));
-  const badge = teamEl.querySelector('.team__avg');
-  if (!badge) return;
-  if (!elos.length) { badge.classList.add('hidden'); return; }
-  const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
-  badge.textContent = '~ ' + avg + ' ELO';
-  badge.classList.remove('hidden');
-}
-
-// ========== Проактивная загрузка всех игроков ==========
+// ========== Проактивная загрузка всех игроков (для среднего ELO) ==========
 async function preloadAllPlayers() {
   const allPlayers = [];
   teamsData.forEach(team => team.players.forEach(p => allPlayers.push(p.faceit)));
@@ -176,11 +184,10 @@ async function preloadAllPlayers() {
           lsSet(cacheKey, data);
         }
         if (typeof data.elo === 'number') results[nick] = data.elo;
-      } catch (e) { /* игнорируем */ }
+      } catch (e) {}
       if (Object.keys(results).length % 5 === 0) updateAllTeamsAvg(results);
     }
   }
-
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   updateAllTeamsAvg(results);
 }
@@ -190,9 +197,7 @@ function updateAllTeamsAvg(eloMap) {
     const teamName = teamEl.dataset.team;
     const team = teamsData.find(t => t.name === teamName);
     if (!team) return;
-    const elos = team.players
-      .map(p => eloMap[p.faceit.toLowerCase()])
-      .filter(v => typeof v === 'number');
+    const elos = team.players.map(p => eloMap[p.faceit.toLowerCase()]).filter(v => typeof v === 'number');
     if (!elos.length) return;
     const avg = Math.round(elos.reduce((a, b) => a + b, 0) / elos.length);
     const badge = teamEl.querySelector('.team__avg');
@@ -220,8 +225,8 @@ function hideTooltip() {
 }
 function moveTooltip(evt) {
   const pad = 16;
-  const w = tooltip.offsetWidth || 360;
-  const h = tooltip.offsetHeight || 320;
+  const w = tooltip.offsetWidth || 560;
+  const h = tooltip.offsetHeight || 420;
   let x = evt.clientX + pad;
   let y = evt.clientY + pad;
   if (x + w > window.innerWidth) x = evt.clientX - w - pad;
@@ -245,15 +250,12 @@ function fillTooltip(d) {
   $('#tt-hs').textContent = s.hs != null ? s.hs + '%' : '—';
   $('#tt-adr').textContent = s.adr ?? '—';
 
-  // Таблица последних матчей
   const recent = (d.recent || []).slice(0, 30);
   $('#tt-recent').innerHTML = renderRecentTable(recent);
 
-  // График Elo
   const eloPoints = recent.map(m => m.elo).filter(v => v != null).reverse();
   $('#tt-chart').innerHTML = renderEloChart(eloPoints);
 
-  // Дельта Elo
   if (eloPoints.length >= 2) {
     const delta = eloPoints[eloPoints.length - 1] - eloPoints[0];
     const el = $('#tt-elo-delta');
@@ -331,15 +333,8 @@ function renderRecentTable(matches) {
     <table class="rt">
       <thead>
         <tr>
-          <th>Рез.</th>
-          <th>Дата</th>
-          <th>Карта</th>
-          <th>Счёт</th>
-          <th>K/D/A</th>
-          <th>K/D</th>
-          <th>K/R</th>
-          <th>HS%</th>
-          <th>ADR</th>
+          <th>Рез.</th><th>Дата</th><th>Карта</th><th>Счёт</th>
+          <th>K/D/A</th><th>K/D</th><th>K/R</th><th>HS%</th><th>ADR</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -349,68 +344,4 @@ function renderRecentTable(matches) {
 
 // ========== Поиск ==========
 searchEl.addEventListener('input', () => {
-  const q = searchEl.value.trim().toLowerCase();
-  document.querySelectorAll('.team').forEach(el => {
-    const name = el.dataset.team.toLowerCase();
-    const players = el.querySelectorAll('.player__nick');
-    const matchTeam = name.includes(q);
-    const matchPlayer = Array.from(players).some(p => p.textContent.toLowerCase().includes(q));
-    el.style.display = (!q || matchTeam || matchPlayer) ? '' : 'none';
-  });
-});
-
-// ========== Обновить ==========
-$('#refreshAll').addEventListener('click', () => {
-  Object.keys(localStorage).forEach(k => { if (k.startsWith('faceit:')) localStorage.removeItem(k); });
-  document.querySelectorAll('.team').forEach(t => {
-    t.dataset.loaded = '0';
-    t.classList.remove('open');
-    const avg = t.querySelector('.team__avg');
-    if (avg) { avg.textContent = ''; avg.classList.add('hidden'); }
-  });
-  loadTeams();
-});
-
-// ========== Утилиты ==========
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function escapeAttr(s) { return escapeHtml(s); }
-function cssEscape(s) { return String(s).replace(/["\\]/g, '\\$&'); }
-
-// Нормализует URL профиля Faceit
-function normalizeFaceitUrl(url, nickname) {
-  if (!url) return `https://www.faceit.com/ru/players/${encodeURIComponent(nickname)}`;
-  let u = String(url).replace('{lang}', 'ru');
-  if (!/^https?:\/\//i.test(u)) u = 'https://www.faceit.com' + (u.startsWith('/') ? '' : '/') + u;
-  const match = u.match(/https?:\/\/www\.faceit\.com(https?:\/\/.+)$/i);
-  if (match) u = match[1];
-  return u;
-}
-
-// HTML иконки уровня
-function levelIconHtml(level, big = false) {
-  const lvl = level ?? 1;
-  const size = big ? 40 : 26;
-  return `<img class="lvl-icon${big ? ' lvl-icon--big' : ''}"
-    src="/assets/levels/${lvl}_lvl.png"
-    alt="LVL ${level ?? '—'}"
-    data-fallback="${escapeAttr(level ?? '—')}"
-    style="width:${size}px;height:${size}px" />`;
-}
-
-// Подменяет битые картинки уровней на текстовый бейдж
-function attachLevelFallbacks(root = document) {
-  root.querySelectorAll('img.lvl-icon:not([data-bound])').forEach(img => {
-    img.dataset.bound = '1';
-    img.addEventListener('error', () => {
-      const badge = document.createElement('span');
-      badge.className = 'lvl';
-      badge.textContent = img.dataset.fallback || '—';
-      img.replaceWith(badge);
-    });
-  });
-}
-
-// ========== Старт ==========
-loadTeams();
+  const q = searchEl.value.trim().toLowerCase
